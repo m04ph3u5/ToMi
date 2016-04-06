@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/security 
+		http://www.springframework.org/schema/security/spring-security.xsd">
+
+	<context:component-scan base-package="it.polito.applied.ToMi.service" />
+	<context:component-scan base-package="it.polito.applied.ToMi.security" />
+
+	<beans:bean id="bCryptPasswordEncoder"
+		class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+
+
+	<authentication-manager alias="authenticationManager">
+		<authentication-provider user-service-ref="userServiceImpl">
+			<password-encoder ref="bCryptPasswordEncoder" />
+		</authentication-provider>
+	</authentication-manager>
+
+
+	<http use-expressions="true" entry-point-ref="restServicesEntryPoint">
+ 	   	<intercept-url pattern="/" access="permitAll" requires-channel="https"/>
+ 	   	<intercept-url pattern="/**" access="isAuthenticated()" requires-channel="https"/>
+		<custom-filter ref="customBasicFilter" position="BASIC_AUTH_FILTER"></custom-filter>
+	</http>
+	
+	<beans:bean id="customBasicFilter" class="it.polito.applied.ToMi.security.CustomAuthenticationFilter"> 
+  		<beans:constructor-arg name="authenticationManager" ref="authenticationManager"/>
+  		<beans:constructor-arg name="authenticationEntryPoint" ref="restServicesEntryPoint" />
+	</beans:bean>
+
+</beans:beans>
