@@ -39,4 +39,10 @@ public class AuthenticationEntryPointRest extends BasicAuthenticationEntryPoint{
 		    response.sendRedirect("/404");
 			
 	}
+	
+	@Override
+    public void afterPropertiesSet() throws Exception {
+		setRealmName("ToMi");
+        super.afterPropertiesSet();
+    }
 }

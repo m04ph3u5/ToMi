@@ -25,6 +25,9 @@
 
 	<http use-expressions="true" entry-point-ref="restServicesEntryPoint">
  	   	<intercept-url pattern="/" access="permitAll" requires-channel="https"/>
+ 	   	<intercept-url pattern="/404" access="permitAll" requires-channel="https"/>
+ 	   	<intercept-url pattern="/assets/public/*" access="permitAll" requires-channel="https"/>
+ 	   	
  	   	<intercept-url pattern="/**" access="isAuthenticated()" requires-channel="https"/>
 		<custom-filter ref="customBasicFilter" position="BASIC_AUTH_FILTER"></custom-filter>
 	</http>
