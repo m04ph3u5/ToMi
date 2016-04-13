@@ -23,13 +23,6 @@ public class User implements UserDetails{
 	@Indexed
 	private String username;
 	private String password;
-	private String nickname;
-	private int age;
-	/*Base64 of user cover image*/
-	private String photo;
-	private String profession;
-	
-	private Date registrationDate;
 	private List<Role> roles;
 
 	public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -68,37 +61,6 @@ public class User implements UserDetails{
 		this.id = id;
 	}
 
-	public String getNickname() {
-		return nickname;
-	}
-
-	public void setNickname(String nickname) {
-		this.nickname = nickname;
-	}
-
-	public int getAge() {
-		return age;
-	}
-
-	public void setAge(int age) {
-		this.age = age;
-	}
-
-	public String getPhoto() {
-		return photo;
-	}
-
-	public void setPhoto(String photo) {
-		this.photo = photo;
-	}
-
-	public String getProfession() {
-		return profession;
-	}
-
-	public void setProfession(String profession) {
-		this.profession = profession;
-	}
 
 	public static long getSerialversionuid() {
 		return serialVersionUID;
@@ -112,13 +74,6 @@ public class User implements UserDetails{
 		this.password = password;
 	}
 
-	public Date getRegistrationDate() {
-		return registrationDate;
-	}
-
-	public void setRegistrationDate(Date registrationDate) {
-		this.registrationDate = registrationDate;
-	}
 
 	public List<Role> getRoles() {
 		return roles;
