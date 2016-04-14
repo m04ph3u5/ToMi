@@ -1,8 +1,13 @@
 package it.polito.applied.ToMi.pojo;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document
 public class Stop {
 
-	private String idStop;
+	@Id
+	private String id;
 	private int passengers;
 	private boolean myRoute;
 	
@@ -10,18 +15,18 @@ public class Stop {
 		
 	}
 	
-	public Stop(String idStop, int passengers, boolean myRoute) {
+	public Stop(String id, int passengers, boolean myRoute) {
 		super();
-		this.idStop = idStop;
+		this.id = id;
 		this.passengers = passengers;
 		this.myRoute = myRoute;
 	}
 	
-	public String getIdStop() {
-		return idStop;
+	public String getid() {
+		return id;
 	}
-	public void setIdStop(String idStop) {
-		this.idStop = idStop;
+	public void setid(String id) {
+		this.id = id;
 	}
 	public int getPassengers() {
 		return passengers;

@@ -1,16 +1,15 @@
 package it.polito.applied.ToMi.pojo;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import it.polito.applied.ToMi.pojo.Role;
-
+@Document
 public class User implements UserDetails{
 	
 	/**

@@ -1,6 +1,7 @@
 package it.polito.applied.ToMi.controller;
 
 import java.util.Date;
+import java.util.List;
 
 import org.hibernate.validator.constraints.Email;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -70,11 +72,67 @@ public class AppController extends BaseController{
 	@PreAuthorize("hasRole('ROLE_APP')")
 	@RequestMapping(value="/v1/position", method=RequestMethod.POST)
 	@ResponseStatus(value = HttpStatus.CREATED)
-	public void savePosition(@RequestBody DetectedPosition position, @RequestHeader(required=true, value="user") @Email String userEmail) throws BadRequestException, ForbiddenException {
+	public void savePosition(@RequestBody List<DetectedPosition> positions, @RequestHeader(required=true, value="user") @Email String userEmail) throws BadRequestException, ForbiddenException {
 		Passenger p = passRepo.findByEmail(userEmail);
 		if(p==null)
 			throw new ForbiddenException("Operation not allowed");
-		position.setUserEmail(userEmail);
-		appService.saveDetectedPosition(position);
+		for(int i=0; i<positions.size(); i++){
+			positions.get(i).setUserEmail(userEmail);
+		}
+		
+		appService.saveDetectedPosition(positions);
+	}
+	
+	@PreAuthorize("hasRole('ROLE_APP')")
+	@RequestMapping(value="/v1/myPositions", method=RequestMethod.GET)
+	@ResponseStatus(value = HttpStatus.OK)
+	public List<DetectedPosition> getMyPositions(@RequestHeader(required=true, value="user") @Email String userEmail, @RequestParam(value = "start", required=true) long start, @RequestParam(value = "end", required=true) long end) throws NotFoundException {
+		Passenger p = passRepo.findByEmail(userEmail);
+		if(p==null)
+			throw new NotFoundException("User not found");
+		return appService.getMyPositions(userEmail, start, end);
+		
+	}
+	
+	@PreAuthorize("hasRole('ROLE_APP')")
+	@RequestMapping(value="/v1/busStop", method=RequestMethod.GET)
+	@ResponseStatus(value = HttpStatus.OK)
+	public List<DetectedPosition> getBusStops(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
+		Passenger p = passRepo.findByEmail(userEmail);
+		if(p==null)
+			throw new NotFoundException("User not found");
+		return appService.getAllBusStop();
+		
+	}
+	
+	@PreAuthorize("hasRole('ROLE_APP')")
+	@RequestMapping(value="/v1/path", method=RequestMethod.GET)
+	@ResponseStatus(value = HttpStatus.OK)
+	public List<DetectedPosition> getPaths(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
+		Passenger p = passRepo.findByEmail(userEmail);
+		if(p==null)
+			throw new NotFoundException("User not found");
+		return appService.getAllPaths();
+		
+	}
+	
+	@PreAuthorize("hasRole('ROLE_APP')")
+	@RequestMapping(value="/v1/pathWithTime", method=RequestMethod.GET)
+	@ResponseStatus(value = HttpStatus.OK)
+	public List<DetectedPosition> getPathsWithTime(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
+		Passenger p = passRepo.findByEmail(userEmail);
+		if(p==null)
+			throw new NotFoundException("User not found");
+		return appService.getAllPathsWithTime();
+	}
+	
+	@PreAuthorize("hasRole('ROLE_APP')")
+	@RequestMapping(value="/v1/bus", method=RequestMethod.GET)
+	@ResponseStatus(value = HttpStatus.OK)
+	public List<DetectedPosition> getBus(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
+		Passenger p = passRepo.findByEmail(userEmail);
+		if(p==null)
+			throw new NotFoundException("User not found");
+		return appService.getAllBus();
 	}
 }
