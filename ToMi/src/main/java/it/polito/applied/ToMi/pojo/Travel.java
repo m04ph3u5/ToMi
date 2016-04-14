@@ -13,12 +13,55 @@ public class Travel {
 	private boolean startIsKnown;
 	private boolean endIsKnown;
 	private String passengerId;
-	private List<DetectedPosition> allPositions;
+	private double initialLat;
+	private double endLat;
+	private double initialLng;
+	private double endLng;
 	private Date start;
+	private Date end;
 	private List<PartialTravel> partialTravels;
 	
 	
-	
+	public Date getEnd() {
+		return end;
+	}
+
+	public void setEnd(Date end) {
+		this.end = end;
+	}
+
+	public double getInitialLat() {
+		return initialLat;
+	}
+
+	public void setInitialLat(double initialLat) {
+		this.initialLat = initialLat;
+	}
+
+	public double getEndLat() {
+		return endLat;
+	}
+
+	public void setEndLat(double endLat) {
+		this.endLat = endLat;
+	}
+
+	public double getInitialLng() {
+		return initialLng;
+	}
+
+	public void setInitialLng(double initialLng) {
+		this.initialLng = initialLng;
+	}
+
+	public double getEndLng() {
+		return endLng;
+	}
+
+	public void setEndLng(double endLng) {
+		this.endLng = endLng;
+	}
+
 	public List<PartialTravel> getPartialTravels() {
 		return partialTravels;
 	}
@@ -60,12 +103,7 @@ public class Travel {
 	public String getId() {
 		return id;
 	}
-	public List<DetectedPosition> getAllPositions() {
-		return allPositions;
-	}
-	public void setAllPositions(List<DetectedPosition> allPositions) {
-		this.allPositions = allPositions;
-	}
+	
 		
 	
 }

@@ -1,6 +1,5 @@
 package it.polito.applied.ToMi.pojo;
 
-import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
@@ -12,17 +11,15 @@ public class TemporaryTravel {
 	@Id
 	private String id;
 	private String passengerId;
-	private Date start;
 	private List<DetectedPosition> detectedPosList;
 	
 	public TemporaryTravel(){
 		super();
 	}
 	
-	public TemporaryTravel(Date start, List<DetectedPosition> detectedPosList) {
+	public TemporaryTravel(List<DetectedPosition> detectedPosList) {
 		super();
-	
-		this.start = start;
+		
 		this.detectedPosList = detectedPosList;
 	}
 	
@@ -40,12 +37,7 @@ public class TemporaryTravel {
 	public void setId(String id) {
 		this.id = id;
 	}
-	public Date getStart() {
-		return start;
-	}
-	public void setStart(Date start) {
-		this.start = start;
-	}
+
 	public List<DetectedPosition> getDetectedPosList() {
 		return detectedPosList;
 	}
