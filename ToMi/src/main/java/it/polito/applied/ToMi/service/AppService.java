@@ -2,7 +2,11 @@ package it.polito.applied.ToMi.service;
 
 import java.util.List;
 
+import it.polito.applied.ToMi.pojo.Bus;
+import it.polito.applied.ToMi.pojo.BusStop;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
+import it.polito.applied.ToMi.pojo.Path;
+import it.polito.applied.ToMi.pojo.PathWithTime;
 
 public interface AppService {
 
@@ -10,11 +14,11 @@ public interface AppService {
 
 	public List<DetectedPosition> getMyPositions(String userEmail, long start, long end);
 
-	public List<DetectedPosition> getAllBusStop();
+	public List<BusStop> getAllBusStop();
 
-	public List<DetectedPosition> getAllPaths();
+	public List<Path> getAllPaths();
 
-	public List<DetectedPosition> getAllPathsWithTime();
+	public List<PathWithTime> getAllPathsWithTime();
 
-	public List<DetectedPosition> getAllBus();
+	public List<Bus> getAllBus();
 }

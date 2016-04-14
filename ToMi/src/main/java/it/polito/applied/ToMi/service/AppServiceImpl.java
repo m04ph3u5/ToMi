@@ -4,7 +4,11 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import it.polito.applied.ToMi.pojo.Bus;
+import it.polito.applied.ToMi.pojo.BusStop;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
+import it.polito.applied.ToMi.pojo.Path;
+import it.polito.applied.ToMi.pojo.PathWithTime;
 import it.polito.applied.ToMi.repository.BusRepository;
 import it.polito.applied.ToMi.repository.BusStopRepository;
 import it.polito.applied.ToMi.repository.DetectedPositionRepository;
@@ -40,25 +44,25 @@ public class AppServiceImpl implements AppService{
 	}
 
 	@Override
-	public List<DetectedPosition> getAllBusStop() {
+	public List<BusStop> getAllBusStop() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List<DetectedPosition> getAllPaths() {
+	public List<Path> getAllPaths() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List<DetectedPosition> getAllPathsWithTime() {
+	public List<PathWithTime> getAllPathsWithTime() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List<DetectedPosition> getAllBus() {
+	public List<Bus> getAllBus() {
 		// TODO Auto-generated method stub
 		return null;
 	}

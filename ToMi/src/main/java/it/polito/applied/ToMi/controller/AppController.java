@@ -19,8 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 import it.polito.applied.ToMi.exception.BadRequestException;
 import it.polito.applied.ToMi.exception.ForbiddenException;
 import it.polito.applied.ToMi.exception.NotFoundException;
+import it.polito.applied.ToMi.pojo.Bus;
+import it.polito.applied.ToMi.pojo.BusStop;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.Passenger;
+import it.polito.applied.ToMi.pojo.Path;
+import it.polito.applied.ToMi.pojo.PathWithTime;
 import it.polito.applied.ToMi.repository.PassengerRepository;
 import it.polito.applied.ToMi.service.AppService;
 
@@ -97,7 +101,7 @@ public class AppController extends BaseController{
 	@PreAuthorize("hasRole('ROLE_APP')")
 	@RequestMapping(value="/v1/busStop", method=RequestMethod.GET)
 	@ResponseStatus(value = HttpStatus.OK)
-	public List<DetectedPosition> getBusStops(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
+	public List<BusStop> getBusStops(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
 		Passenger p = passRepo.findByEmail(userEmail);
 		if(p==null)
 			throw new NotFoundException("User not found");
@@ -108,7 +112,7 @@ public class AppController extends BaseController{
 	@PreAuthorize("hasRole('ROLE_APP')")
 	@RequestMapping(value="/v1/path", method=RequestMethod.GET)
 	@ResponseStatus(value = HttpStatus.OK)
-	public List<DetectedPosition> getPaths(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
+	public List<Path> getPaths(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
 		Passenger p = passRepo.findByEmail(userEmail);
 		if(p==null)
 			throw new NotFoundException("User not found");
@@ -119,7 +123,7 @@ public class AppController extends BaseController{
 	@PreAuthorize("hasRole('ROLE_APP')")
 	@RequestMapping(value="/v1/pathWithTime", method=RequestMethod.GET)
 	@ResponseStatus(value = HttpStatus.OK)
-	public List<DetectedPosition> getPathsWithTime(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
+	public List<PathWithTime> getPathsWithTime(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
 		Passenger p = passRepo.findByEmail(userEmail);
 		if(p==null)
 			throw new NotFoundException("User not found");
@@ -129,7 +133,7 @@ public class AppController extends BaseController{
 	@PreAuthorize("hasRole('ROLE_APP')")
 	@RequestMapping(value="/v1/bus", method=RequestMethod.GET)
 	@ResponseStatus(value = HttpStatus.OK)
-	public List<DetectedPosition> getBus(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
+	public List<Bus> getBus(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
 		Passenger p = passRepo.findByEmail(userEmail);
 		if(p==null)
 			throw new NotFoundException("User not found");
