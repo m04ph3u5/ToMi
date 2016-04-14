@@ -7,13 +7,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import it.polito.applied.ToMi.pojo.Bus;
 import it.polito.applied.ToMi.pojo.BusStop;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
+import it.polito.applied.ToMi.pojo.Passenger;
 import it.polito.applied.ToMi.pojo.Path;
 import it.polito.applied.ToMi.pojo.PathWithTime;
+import it.polito.applied.ToMi.pojo.TemporaryTravel;
 import it.polito.applied.ToMi.repository.BusRepository;
 import it.polito.applied.ToMi.repository.BusStopRepository;
 import it.polito.applied.ToMi.repository.DetectedPositionRepository;
 import it.polito.applied.ToMi.repository.PathRepository;
 import it.polito.applied.ToMi.repository.PathWithTimeRepository;
+import it.polito.applied.ToMi.repository.TemporaryTravelRepository;
 
 public class AppServiceImpl implements AppService{
 	
@@ -31,11 +34,54 @@ public class AppServiceImpl implements AppService{
 	
 	@Autowired 
 	private BusRepository busRepo;
+	
+	@Autowired
+	private TemporaryTravelRepository tempTravelRepo;
+	
 
 	@Override
-	public void saveDetectedPosition(List<DetectedPosition> position) {
+	public void saveDetectedPosition(List<DetectedPosition> position, Passenger passenger) {
+		
+		TemporaryTravel tempTravel = tempTravelRepo.findByPassengerId(passenger.getId());
+		if(tempTravel==null){
+			tempTravel = new TemporaryTravel();
+			tempTravel.setPassengerId(passenger.getId());
+		}		
+		
+		for(DetectedPosition p : position){
+			p.setUserEmail(passenger.getEmail());
+			//Lunghezza della lista delle detectedPosition già presenti dentro temporaryTravel
+			int numActualPos = tempTravel.getSizeOfDetectedPosition();
+			int mode = p.getMode();
+			switch(mode){
+				case 9:{	//ENTER
+					if(numActualPos>0){
+						tempTravel.addDetectedPos(p);
+						saveTravel(tempTravel);
+					}
+					break;
+				}
+				case 10:{ 	//EXIT
+					break;
+				}
+				case 11:{	//ONCREATE
+					break;
+				}
+				case 12:{	//ONDESTROY
+					break;	
+				}
+				default : {
+					
+				}
+			}
+		}
+		
 		posRepo.insert(position);
-		//TODO aggiungere logica aggregazione a seconda di come saranno i dati forniti dalla società di bus
+	}
+
+	private void saveTravel(TemporaryTravel tempTravel) {
+		// TODO Auto-generated method stub
+		//TODO eliminare tempTravel dal database se tempTravel ha un id
 	}
 
 	@Override

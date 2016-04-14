@@ -1,5 +1,6 @@
 package it.polito.applied.ToMi.pojo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
@@ -15,6 +16,7 @@ public class TemporaryTravel {
 	
 	public TemporaryTravel(){
 		super();
+		detectedPosList = new ArrayList<DetectedPosition>();
 	}
 	
 	public TemporaryTravel(List<DetectedPosition> detectedPosList) {
@@ -46,6 +48,10 @@ public class TemporaryTravel {
 	
 	public void addDetectedPos (DetectedPosition p){
 		this.detectedPosList.add(p);
+	}
+	
+	public int getSizeOfDetectedPosition(){
+		return detectedPosList.size();
 	}
 	
 	
