@@ -18,8 +18,7 @@ public class TemporaryTravel {
 	}
 	
 	public TemporaryTravel(List<DetectedPosition> detectedPosList) {
-		super();
-		
+		super();	
 		this.detectedPosList = detectedPosList;
 	}
 	
