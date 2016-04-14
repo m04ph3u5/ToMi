@@ -26,8 +26,6 @@ public class TemporaryTravel {
 		this.detectedPosList = detectedPosList;
 	}
 	
-	
-	
 	public String getPassengerId() {
 		return passengerId;
 	}

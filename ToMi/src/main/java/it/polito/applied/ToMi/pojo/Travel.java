@@ -15,14 +15,22 @@ public class Travel {
 	private String passengerId;
 	private List<DetectedPosition> allPositions;
 	private Date start;
+	private List<PartialTravel> partialTravels;
 	
-	public Travel(boolean startIsKnown, boolean endIsKnown, String passengerId) {
-		super();
-		this.startIsKnown = startIsKnown;
-		this.endIsKnown = endIsKnown;
-		this.passengerId = passengerId;
+	
+	
+	public List<PartialTravel> getPartialTravels() {
+		return partialTravels;
+	}
+
+	public void setPartialTravels(List<PartialTravel> partialTravels) {
+		this.partialTravels = partialTravels;
 	}
 	
+	public void addPartialTravel(PartialTravel p){
+		this.partialTravels.add(p);
+	}
+
 	public Date getStart() {
 		return start;
 	}
