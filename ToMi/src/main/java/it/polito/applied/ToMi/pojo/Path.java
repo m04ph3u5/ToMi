@@ -12,6 +12,7 @@ public class Path {
 	private String idPath;
 	private List <BusStop> stop;
 	
+	
 	public String getId() {
 		return id;
 	}

@@ -1,5 +1,6 @@
 package it.polito.applied.ToMi.pojo;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
@@ -13,6 +14,7 @@ public class Travel {
 	private boolean endIsKnown;
 	private String passengerId;
 	private List<DetectedPosition> allPositions;
+	private Date start;
 	
 	public Travel(boolean startIsKnown, boolean endIsKnown, String passengerId) {
 		super();
@@ -20,6 +22,15 @@ public class Travel {
 		this.endIsKnown = endIsKnown;
 		this.passengerId = passengerId;
 	}
+	
+	public Date getStart() {
+		return start;
+	}
+
+	public void setStart(Date start) {
+		this.start = start;
+	}
+
 	public boolean isStartIsKnown() {
 		return startIsKnown;
 	}
