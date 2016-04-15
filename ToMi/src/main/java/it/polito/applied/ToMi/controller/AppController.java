@@ -80,8 +80,8 @@ public class AppController extends BaseController{
 		Passenger p = passRepo.findByEmail(userEmail);
 		if(p==null)
 			throw new ForbiddenException("Operation not allowed");
-		
-		appService.saveDetectedPosition(positions, p);
+		if(positions.size()>0)
+			appService.saveDetectedPosition(positions, p);
 	}
 	
 	@PreAuthorize("hasRole('ROLE_APP')")

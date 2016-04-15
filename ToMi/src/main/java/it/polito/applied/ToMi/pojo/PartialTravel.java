@@ -11,6 +11,8 @@ public class PartialTravel {
 	private Date start;
 	private Date end;
 	private List<DetectedPosition> allPositions;
+	private double lengthTravel;
+	private double lengthAccuracy;
 	
 	public PartialTravel(){
 		super();
@@ -73,6 +75,22 @@ public class PartialTravel {
 	}
 	public void setBeaconId(int beaconId) {
 		this.beaconId = beaconId;
+	}
+
+	public double getLengthTravel() {
+		return lengthTravel;
+	}
+
+	public void setLengthTravel(double lengthTravel) {
+		this.lengthTravel = lengthTravel;
+	}
+
+	public double getLengthAccuracy() {
+		return lengthAccuracy;
+	}
+
+	public void setLengthAccuracy(double lengthAccuracy) {
+		this.lengthAccuracy = lengthAccuracy;
 	}
 	
 	

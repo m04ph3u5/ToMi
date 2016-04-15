@@ -4,14 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
+@CompoundIndex (name = "passenger_device", def = "{'passengerId': 1, 'deviceId': 1}", unique=true)
 public class TemporaryTravel {
 
 	@Id
 	private String id;
 	private String passengerId;
+	private String deviceId;
 	private List<DetectedPosition> detectedPosList;
 	
 	public TemporaryTravel(){
@@ -53,6 +57,17 @@ public class TemporaryTravel {
 	public int getSizeOfDetectedPosition(){
 		return detectedPosList.size();
 	}
+
+	public String getDeviceId() {
+		return deviceId;
+	}
+
+	public void setDeviceId(String deviceId) {
+		this.deviceId = deviceId;
+	}
 	
-	
+	public void clear(){
+		this.id = ""; 
+		this.detectedPosList.clear();
+	}
 }

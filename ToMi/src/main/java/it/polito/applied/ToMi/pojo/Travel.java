@@ -13,10 +13,8 @@ public class Travel {
 	private boolean startIsKnown;
 	private boolean endIsKnown;
 	private String passengerId;
-	private double initialLat;
-	private double endLat;
-	private double initialLng;
-	private double endLng;
+	private double lengthTravel;
+	private double lengthAccuracy;
 	private Date start;
 	private Date end;
 	private List<PartialTravel> partialTravels;
@@ -30,36 +28,20 @@ public class Travel {
 		this.end = end;
 	}
 
-	public double getInitialLat() {
-		return initialLat;
+	public double getLengthTravel() {
+		return lengthTravel;
 	}
 
-	public void setInitialLat(double initialLat) {
-		this.initialLat = initialLat;
+	public void setLengthTravel(double lengthTravel) {
+		this.lengthTravel = lengthTravel;
 	}
 
-	public double getEndLat() {
-		return endLat;
+	public double getLengthAccuracy() {
+		return lengthAccuracy;
 	}
 
-	public void setEndLat(double endLat) {
-		this.endLat = endLat;
-	}
-
-	public double getInitialLng() {
-		return initialLng;
-	}
-
-	public void setInitialLng(double initialLng) {
-		this.initialLng = initialLng;
-	}
-
-	public double getEndLng() {
-		return endLng;
-	}
-
-	public void setEndLng(double endLng) {
-		this.endLng = endLng;
+	public void setLengthAccuracy(double lengthAccuracy) {
+		this.lengthAccuracy = lengthAccuracy;
 	}
 
 	public List<PartialTravel> getPartialTravels() {
