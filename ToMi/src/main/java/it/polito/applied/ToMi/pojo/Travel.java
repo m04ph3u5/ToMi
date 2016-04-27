@@ -10,14 +10,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Travel {
 	@Id
 	private String id;
-	private boolean startIsKnown;
-	private boolean endIsKnown;
+	private boolean isOnBus;
 	private String passengerId;
 	private double lengthTravel;
 	private double lengthAccuracy;
 	private Date start;
 	private Date end;
-	private List<PartialTravel> partialTravels;
+	private List<DetectedPosition> positions;
 	
 	
 	public Date getEnd() {
@@ -43,38 +42,12 @@ public class Travel {
 	public void setLengthAccuracy(double lengthAccuracy) {
 		this.lengthAccuracy = lengthAccuracy;
 	}
-
-	public List<PartialTravel> getPartialTravels() {
-		return partialTravels;
-	}
-
-	public void setPartialTravels(List<PartialTravel> partialTravels) {
-		this.partialTravels = partialTravels;
-	}
-	
-	public void addPartialTravel(PartialTravel p){
-		this.partialTravels.add(p);
-	}
-
 	public Date getStart() {
 		return start;
 	}
 
 	public void setStart(Date start) {
 		this.start = start;
-	}
-
-	public boolean isStartIsKnown() {
-		return startIsKnown;
-	}
-	public void setStartIsKnown(boolean startIsKnown) {
-		this.startIsKnown = startIsKnown;
-	}
-	public boolean isEndIsKnown() {
-		return endIsKnown;
-	}
-	public void setEndIsKnown(boolean endIsKnown) {
-		this.endIsKnown = endIsKnown;
 	}
 	public String getPassengerId() {
 		return passengerId;
@@ -84,6 +57,18 @@ public class Travel {
 	}
 	public String getId() {
 		return id;
+	}
+	public List<DetectedPosition> getPositions() {
+		return positions;
+	}
+	public void setPositions(List<DetectedPosition> positions) {
+		this.positions = positions;
+	}
+	public boolean isOnBus() {
+		return isOnBus;
+	}
+	public void setOnBus(boolean isOnBus) {
+		this.isOnBus = isOnBus;
 	}
 	
 		

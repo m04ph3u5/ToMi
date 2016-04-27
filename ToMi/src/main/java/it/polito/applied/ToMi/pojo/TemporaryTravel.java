@@ -70,4 +70,10 @@ public class TemporaryTravel {
 		this.id = ""; 
 		this.detectedPosList.clear();
 	}
+	public DetectedPosition getLastPosition(){
+		if(detectedPosList!=null && detectedPosList.size()>0)
+			return detectedPosList.get(detectedPosList.size()-1);
+		else
+			return null;
+	}
 }

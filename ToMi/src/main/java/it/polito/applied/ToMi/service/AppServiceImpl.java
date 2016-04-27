@@ -18,6 +18,7 @@ import it.polito.applied.ToMi.repository.DetectedPositionRepository;
 import it.polito.applied.ToMi.repository.PathRepository;
 import it.polito.applied.ToMi.repository.PathWithTimeRepository;
 import it.polito.applied.ToMi.repository.TemporaryTravelRepository;
+import it.polito.applied.ToMi.repository.TravelRepository;
 
 public class AppServiceImpl implements AppService{
 	
@@ -39,6 +40,9 @@ public class AppServiceImpl implements AppService{
 	@Autowired
 	private TemporaryTravelRepository tempTravelRepo;
 	
+	@Autowired
+	private TravelRepository travelRepo;
+	
 	public final int IN_VEHICLE=0;
 	public final int ON_BICYCLE=1;
 	public final int ON_FOOT=2;
@@ -52,14 +56,22 @@ public class AppServiceImpl implements AppService{
 	public final int ONCREATE=11;
 	public final int ONDESTROY=12;
 
-	private final int COMPLETE=0;
-	private final int PARTIAL_START=1;
-	private final int PARTIAL_END=2;
-	private final int INVALID=3;
+	private final int ON_BUS=0;
+	private final int NOT_ON_BUS=1;
+	private final int INVALID=2;
+	
+	private final int NOPOSITION=1000;
+	
+	//3h Time in millis 
+	private final long THREE_HOURS=10800000;
+	
+	
 	
 	@Override
 	public void saveDetectedPosition(List<DetectedPosition> position, Passenger passenger) {
 		
+		//Mi arriva una lista di posizioni rilevate dall'app. Controllo se per quel passeggero ho già un viaggio pendente
+		//(oggetti temporaryTravel). Nel caso non ne avessi per quel passeggero nel database, ne istanzio uno.
 		TemporaryTravel tempTravel = tempTravelRepo.findByPassengerIdAndDeviceId(passenger.getId(), position.get(0).getDeviceId());
 		if(tempTravel==null){
 			tempTravel = new TemporaryTravel();
@@ -68,46 +80,89 @@ public class AppServiceImpl implements AppService{
 		}		
 		
 		for(DetectedPosition p : position){
-			p.setUserEmail(passenger.getEmail());
-			//Lunghezza della lista delle detectedPosition già presenti dentro temporaryTravel
-			int numActualPos = tempTravel.getSizeOfDetectedPosition();
-			int mode = p.getMode();
-			switch(mode){
-				case ENTER:{	//ENTER
-					if(numActualPos>0){
+			//Se il log che mi arriva dall'app non ha una posizione valida, lo salvo all'interno del repo delle detectedPosition (log) ma non lo considero
+			//per la costruzione di viaggi
+			if(p.getPosition().getLat()!=NOPOSITION){
+				p.setUserEmail(passenger.getEmail());
+				DetectedPosition last = tempTravel.getLastPosition();
+
+				/*Se il log dell'app contiene un beaconId vuol dire che con relativa certezza l'utente si trovava su un pullman. Questo criterio ha priorità
+				 * massima rispetto a tutti gli altri. È l'informazione più attendibile che possiamo ottenere.
+				 * In questo caso considero uno stesso viaggio formato da log che hanno lo stesso beaconId e che hanno una distanza temporale tra un log 
+				 * ed un altro, non superiore alle tre ore*/
+				if(p.getBeaconId()!=null && !p.getBeaconId().isEmpty()){
+					if(last==null){
 						tempTravel.addDetectedPos(p);
-						saveTravel(tempTravel);
-						tempTravel.clear();
+					}else{
+						if(last.getBeaconId().equals(p.getBeaconId()) && (p.getTimestamp().getTime()-last.getTimestamp().getTime() <= THREE_HOURS)){
+							tempTravel.addDetectedPos(p);
+						}else{
+							saveTravel(tempTravel);
+							tempTravel.clear();
+							tempTravel.setPassengerId(passenger.getId());
+							tempTravel.setDeviceId(position.get(0).getDeviceId());
+							tempTravel.addDetectedPos(p);
+						}
 					}
-					break;
-				}
-				case EXIT:{ 	//EXIT
-					if(numActualPos>0){
-						saveTravel(tempTravel);
-						tempTravel.clear();
+				/*Il log non contiene il beaconId. Ciò significa che non sono su un pullman*/	
+				}else{
+					if(last==null){
+						if(p.getMode()!=ENTER && p.getMode()!=ONDESTROY)
+							tempTravel.addDetectedPos(p);
+					}else{
+						if((last.getBeaconId()!=null && !last.getBeaconId().isEmpty()) || p.getMode()==EXIT ){
+							saveTravel(tempTravel);
+							tempTravel.clear();
+							tempTravel.setPassengerId(passenger.getId());
+							tempTravel.setDeviceId(position.get(0).getDeviceId());
+							if(p.getMode()!=ENTER && p.getMode()!=ONDESTROY)
+								tempTravel.addDetectedPos(p);
+						}
 					}
-					tempTravel.addDetectedPos(p);
-					break;
 				}
-				case ONCREATE:{	//ONCREATE
-					if(numActualPos>0){
-						saveTravel(tempTravel);
-						tempTravel.clear();
-					}
-					tempTravel.addDetectedPos(p);
-					break;
-				}
-				case ONDESTROY:{	//ONDESTROY
-					if(numActualPos>0){
-						tempTravel.addDetectedPos(p);
-						saveTravel(tempTravel);
-						tempTravel.clear();
-					}
-					break;	
-				}
-				default : {
-					tempTravel.addDetectedPos(p);
-				}
+				
+				
+				
+				
+				
+//				int mode = p.getMode();
+//				switch(mode){
+//					case ENTER:{	//ENTER
+//						if(numActualPos>0){
+//							tempTravel.addDetectedPos(p);
+//							saveTravel(tempTravel);
+//							tempTravel.clear();
+//						}
+//						break;
+//					}
+//					case EXIT:{ 	//EXIT
+//						if(numActualPos>0){
+//							saveTravel(tempTravel);
+//							tempTravel.clear();
+//						}
+//						tempTravel.addDetectedPos(p);
+//						break;
+//					}
+//					case ONCREATE:{	//ONCREATE
+//						if(numActualPos>0){
+//							saveTravel(tempTravel);
+//							tempTravel.clear();
+//						}
+//						tempTravel.addDetectedPos(p);
+//						break;
+//					}
+//					case ONDESTROY:{	//ONDESTROY
+//						if(numActualPos>0){
+//							tempTravel.addDetectedPos(p);
+//							saveTravel(tempTravel);
+//							tempTravel.clear();
+//						}
+//						break;	
+//					}
+//					default : {
+//						tempTravel.addDetectedPos(p);
+//					}
+//				}
 			}
 		}
 		
@@ -135,66 +190,36 @@ public class AppServiceImpl implements AppService{
 			travel.setStart(tempTravel.getDetectedPosList().get(0).getTimestamp());
 			travel.setEnd(tempTravel.getDetectedPosList().get(tempTravel.getDetectedPosList().size()-1).getTimestamp());
 			switch(travelType){
-				case COMPLETE : {
-					travel.setStartIsKnown(true);
-					travel.setEndIsKnown(true);
+				case ON_BUS:{
+					travel.setOnBus(true);
 					break;
 				}
-				case PARTIAL_START : {
-					travel.setStartIsKnown(false);
-					travel.setEndIsKnown(true);
-					break;
-				}
-				case PARTIAL_END : {
-					travel.setStartIsKnown(true);
-					travel.setEndIsKnown(false);
+				case NOT_ON_BUS:{
+					travel.setOnBus(false);
 					break;
 				}
 			}
-			extractPartialTravel(travel, tempTravel.getDetectedPosList());
+			travel.setPositions(tempTravel.getDetectedPosList());
+			travelRepo.save(travel);
 		}
 		
 	}
 
-
-	private void extractPartialTravel(Travel travel, List<DetectedPosition> positions) {
-		DetectedPosition firstPosition = positions.get(0);
-		if(firstPosition.getMode()==EXIT || firstPosition.getMode()==ONCREATE){
-			positions.remove(0);
-		}
-		for(int i=0; i<positions.size(); i++){
-			if(positions.get(i).getMode()==ENTER || positions.get(i).getMode()== ONDESTROY){
-				positions.remove(i);
-			}else{
-				
-			}
-		}
-	}
 
 	private int recognizeTravel(List<DetectedPosition> positions) {
 		if(positions.size()<=2)
 			return INVALID;
 		
-		if(positions.get(0).getMode()!=EXIT && positions.get(0).getMode()!=ONCREATE
-				&& positions.get(positions.size()-1).getMode()!=ENTER
-				&& positions.get(positions.size()-1).getMode()!=ONDESTROY)
-			return INVALID;
-		
-		if(!containsMovementPosition(positions))
-			return INVALID;
-		
-		if(positions.get(0).getMode()==EXIT && positions.get(positions.size()-1).getMode()==ENTER)
-			return COMPLETE;
-		else if(positions.get(0).getMode()!=EXIT && positions.get(positions.size()-1).getMode()==ENTER)
-			return PARTIAL_START;
-		else 
-			return PARTIAL_END;
+		if(positions.get(0).getBeaconId()!=null && !positions.get(0).getBeaconId().isEmpty())
+			return ON_BUS;
+		else
+			return NOT_ON_BUS;
 	}
 
 	private boolean containsMovementPosition(List<DetectedPosition> positions) {
 		for(DetectedPosition p : positions){
 			int mode = p.getMode();
-			if(mode==IN_VEHICLE || mode==ON_BICYCLE || mode==ON_FOOT || mode==WALKING || mode==RUNNING)
+			if(mode==IN_VEHICLE || mode==ON_BICYCLE || mode==ON_FOOT || mode==WALKING || mode==RUNNING || mode==STILL)
 				return true;
 		}
 		return false;
