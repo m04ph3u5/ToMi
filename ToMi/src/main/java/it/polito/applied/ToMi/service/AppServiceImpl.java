@@ -21,28 +21,28 @@ import it.polito.applied.ToMi.repository.TemporaryTravelRepository;
 import it.polito.applied.ToMi.repository.TravelRepository;
 
 public class AppServiceImpl implements AppService{
-	
+
 	@Autowired
 	private DetectedPositionRepository posRepo;
-	
+
 	@Autowired
 	private PathRepository pathRepo;
-	
+
 	@Autowired
 	private PathWithTimeRepository pathWithTimeRepo;
-	
+
 	@Autowired
 	private BusStopRepository busStopRepo;
-	
+
 	@Autowired 
 	private BusRepository busRepo;
-	
+
 	@Autowired
 	private TemporaryTravelRepository tempTravelRepo;
-	
+
 	@Autowired
 	private TravelRepository travelRepo;
-	
+
 	public final int IN_VEHICLE=0;
 	public final int ON_BICYCLE=1;
 	public final int ON_FOOT=2;
@@ -59,17 +59,17 @@ public class AppServiceImpl implements AppService{
 	private final int ON_BUS=0;
 	private final int NOT_ON_BUS=1;
 	private final int INVALID=2;
-	
+
 	private final int NOPOSITION=1000;
-	
+
 	//3h Time in millis 
 	private final long THREE_HOURS=10800000;
-	
-	
-	
+
+
+
 	@Override
 	public void saveDetectedPosition(List<DetectedPosition> position, Passenger passenger) {
-		
+
 		//Mi arriva una lista di posizioni rilevate dall'app. Controllo se per quel passeggero ho già un viaggio pendente
 		//(oggetti temporaryTravel). Nel caso non ne avessi per quel passeggero nel database, ne istanzio uno.
 		TemporaryTravel tempTravel = tempTravelRepo.findByPassengerIdAndDeviceId(passenger.getId(), position.get(0).getDeviceId());
@@ -78,7 +78,7 @@ public class AppServiceImpl implements AppService{
 			tempTravel.setPassengerId(passenger.getId());
 			tempTravel.setDeviceId(position.get(0).getDeviceId());
 		}		
-		
+
 		for(DetectedPosition p : position){
 			//Se il log che mi arriva dall'app non ha una posizione valida, lo salvo all'interno del repo delle detectedPosition (log) ma non lo considero
 			//per la costruzione di viaggi
@@ -104,13 +104,13 @@ public class AppServiceImpl implements AppService{
 							tempTravel.addDetectedPos(p);
 						}
 					}
-				/*Il log non contiene il beaconId. Ciò significa che non sono su un pullman*/	
+					/*Il log non contiene il beaconId. Ciò significa che non sono su un pullman*/	
 				}else{
 					if(last==null){
 						if(p.getMode()!=ENTER && p.getMode()!=ONDESTROY)
 							tempTravel.addDetectedPos(p);
 					}else{
-						if((last.getBeaconId()!=null && !last.getBeaconId().isEmpty()) || p.getMode()==EXIT ){
+						if((last.getBeaconId()!=null && !last.getBeaconId().isEmpty()) || p.getMode()==EXIT){
 							saveTravel(tempTravel);
 							tempTravel.clear();
 							tempTravel.setPassengerId(passenger.getId());
@@ -120,52 +120,52 @@ public class AppServiceImpl implements AppService{
 						}
 					}
 				}
-				
-				
-				
-				
-				
-//				int mode = p.getMode();
-//				switch(mode){
-//					case ENTER:{	//ENTER
-//						if(numActualPos>0){
-//							tempTravel.addDetectedPos(p);
-//							saveTravel(tempTravel);
-//							tempTravel.clear();
-//						}
-//						break;
-//					}
-//					case EXIT:{ 	//EXIT
-//						if(numActualPos>0){
-//							saveTravel(tempTravel);
-//							tempTravel.clear();
-//						}
-//						tempTravel.addDetectedPos(p);
-//						break;
-//					}
-//					case ONCREATE:{	//ONCREATE
-//						if(numActualPos>0){
-//							saveTravel(tempTravel);
-//							tempTravel.clear();
-//						}
-//						tempTravel.addDetectedPos(p);
-//						break;
-//					}
-//					case ONDESTROY:{	//ONDESTROY
-//						if(numActualPos>0){
-//							tempTravel.addDetectedPos(p);
-//							saveTravel(tempTravel);
-//							tempTravel.clear();
-//						}
-//						break;	
-//					}
-//					default : {
-//						tempTravel.addDetectedPos(p);
-//					}
-//				}
+
+
+
+
+
+				//				int mode = p.getMode();
+				//				switch(mode){
+				//					case ENTER:{	//ENTER
+				//						if(numActualPos>0){
+				//							tempTravel.addDetectedPos(p);
+				//							saveTravel(tempTravel);
+				//							tempTravel.clear();
+				//						}
+				//						break;
+				//					}
+				//					case EXIT:{ 	//EXIT
+				//						if(numActualPos>0){
+				//							saveTravel(tempTravel);
+				//							tempTravel.clear();
+				//						}
+				//						tempTravel.addDetectedPos(p);
+				//						break;
+				//					}
+				//					case ONCREATE:{	//ONCREATE
+				//						if(numActualPos>0){
+				//							saveTravel(tempTravel);
+				//							tempTravel.clear();
+				//						}
+				//						tempTravel.addDetectedPos(p);
+				//						break;
+				//					}
+				//					case ONDESTROY:{	//ONDESTROY
+				//						if(numActualPos>0){
+				//							tempTravel.addDetectedPos(p);
+				//							saveTravel(tempTravel);
+				//							tempTravel.clear();
+				//						}
+				//						break;	
+				//					}
+				//					default : {
+				//						tempTravel.addDetectedPos(p);
+				//					}
+				//				}
 			}
 		}
-		
+
 		if(tempTravel.getSizeOfDetectedPosition()>0)
 			tempTravelRepo.save(tempTravel);
 		posRepo.insert(position);
@@ -175,7 +175,7 @@ public class AppServiceImpl implements AppService{
 		// TODO Auto-generated method stub
 		if(tempTravel.getId()!=null && !tempTravel.getId().isEmpty())
 			tempTravelRepo.delete(tempTravel.getId());
-		
+
 		/*
 		 * 0 - total travel (known exit and enter)
 		 * 1 - partial start travel (unknown exit, know enter)
@@ -183,33 +183,61 @@ public class AppServiceImpl implements AppService{
 		 * 3 - invalid travel (absence of movement mode or unknown enter and exit or too short travel).
 		 * */
 		int travelType = recognizeTravel(tempTravel.getDetectedPosList()); 
-		
+
 		if(travelType!=INVALID){
 			Travel travel = new Travel();
 			travel.setPassengerId(tempTravel.getPassengerId());
 			travel.setStart(tempTravel.getDetectedPosList().get(0).getTimestamp());
 			travel.setEnd(tempTravel.getDetectedPosList().get(tempTravel.getDetectedPosList().size()-1).getTimestamp());
 			switch(travelType){
-				case ON_BUS:{
-					travel.setOnBus(true);
-					break;
-				}
-				case NOT_ON_BUS:{
-					travel.setOnBus(false);
-					break;
-				}
+			case ON_BUS:{
+				travel.setOnBus(true);
+				break;
+			}
+			case NOT_ON_BUS:{
+				travel.setOnBus(false);
+				break;
+			}
 			}
 			travel.setPositions(tempTravel.getDetectedPosList());
+			calculateDistance(travel);
 			travelRepo.save(travel);
 		}
-		
+
 	}
 
+
+	private void calculateDistance(Travel travel) {
+		double distance=0d;
+		int sameDistancePoints=0;
+		
+		if(travel!=null){
+			List<DetectedPosition> points = travel.getPositions();
+			if(points.size()>1){
+				DetectedPosition before = points.get(0);
+				DetectedPosition actual = null;
+				for(int i=1; i<points.size(); i++){
+					actual = points.get(i);
+					if(before.getPosition().getLat()==actual.getPosition().getLat() 
+							&& before.getPosition().getLng()==actual.getPosition().getLng()){
+						sameDistancePoints++;
+					}else{
+						distance+=distFrom(before.getPosition().getLat(), before.getPosition().getLng(), actual.getPosition().getLat(), actual.getPosition().getLng());
+					}
+					before = actual;
+				}
+				travel.setLengthTravel(distance);
+				travel.setLengthAccuracy(100-((sameDistancePoints*100)/points.size()));
+			}
+		}
+
+		
+	}
 
 	private int recognizeTravel(List<DetectedPosition> positions) {
 		if(positions.size()<=2)
 			return INVALID;
-		
+
 		if(positions.get(0).getBeaconId()!=null && !positions.get(0).getBeaconId().isEmpty())
 			return ON_BUS;
 		else
@@ -252,6 +280,20 @@ public class AppServiceImpl implements AppService{
 	public List<Bus> getAllBus() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	private double distFrom(double lat1, double lng1, double lat2, double lng2) {
+		double earthRadius = 6371000; // meters
+		double dLat = Math.toRadians(lat2-lat1);
+		double dLng = Math.toRadians(lng2-lng1);
+		double sindLat = Math.sin(dLat / 2);
+		double sindLng = Math.sin(dLng / 2);
+		double a = Math.pow(sindLat, 2) + Math.pow(sindLng, 2)
+		* Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2));
+		double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+		double dist = earthRadius * c;
+
+		return dist;
 	}
 
 }
