@@ -1,11 +1,16 @@
 package it.polito.applied.ToMi.service;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import it.polito.applied.ToMi.pojo.Bus;
 import it.polito.applied.ToMi.pojo.BusStop;
+import it.polito.applied.ToMi.pojo.Comment;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.Passenger;
 import it.polito.applied.ToMi.pojo.Path;
@@ -14,12 +19,14 @@ import it.polito.applied.ToMi.pojo.TemporaryTravel;
 import it.polito.applied.ToMi.pojo.Travel;
 import it.polito.applied.ToMi.repository.BusRepository;
 import it.polito.applied.ToMi.repository.BusStopRepository;
+import it.polito.applied.ToMi.repository.CommentRepository;
 import it.polito.applied.ToMi.repository.DetectedPositionRepository;
 import it.polito.applied.ToMi.repository.PathRepository;
 import it.polito.applied.ToMi.repository.PathWithTimeRepository;
 import it.polito.applied.ToMi.repository.TemporaryTravelRepository;
 import it.polito.applied.ToMi.repository.TravelRepository;
 
+@Service
 public class AppServiceImpl implements AppService{
 
 	@Autowired
@@ -42,6 +49,9 @@ public class AppServiceImpl implements AppService{
 
 	@Autowired
 	private TravelRepository travelRepo;
+	
+	@Autowired
+	private CommentRepository commentRepo;
 
 	public final int IN_VEHICLE=0;
 	public final int ON_BICYCLE=1;
@@ -64,8 +74,17 @@ public class AppServiceImpl implements AppService{
 
 	//3h Time in millis 
 	private final long THREE_HOURS=10800000;
+	//20minutes in millis
+	private final long TWENTY_MINUTES=1200000;
 
-
+	private SimpleDateFormat date;
+	private SimpleDateFormat time;
+	
+	@PostConstruct
+	public void initialize(){
+		date = new SimpleDateFormat("dd/MM/yyyy");
+		time = new SimpleDateFormat("hh:mm");
+	}
 
 	@Override
 	public void saveDetectedPosition(List<DetectedPosition> position, Passenger passenger) {
@@ -98,7 +117,7 @@ public class AppServiceImpl implements AppService{
 							tempTravel.addDetectedPos(p);
 						}else{
 							saveTravel(tempTravel);
-							tempTravel.clear();
+							tempTravel = new TemporaryTravel();
 							tempTravel.setPassengerId(passenger.getId());
 							tempTravel.setDeviceId(position.get(0).getDeviceId());
 							tempTravel.addDetectedPos(p);
@@ -110,14 +129,17 @@ public class AppServiceImpl implements AppService{
 						if(p.getMode()!=ENTER && p.getMode()!=ONDESTROY)
 							tempTravel.addDetectedPos(p);
 					}else{
-						if((last.getBeaconId()!=null && !last.getBeaconId().isEmpty()) || p.getMode()==EXIT){
+						//TODO valutare condizioni uscita e fine viaggio (oltre a EXIT
+						if((last.getBeaconId()!=null && !last.getBeaconId().isEmpty()) || p.getMode()==EXIT
+								|| (p.getTimestamp().getTime()-last.getTimestamp().getTime()>TWENTY_MINUTES)){
 							saveTravel(tempTravel);
-							tempTravel.clear();
+							tempTravel = new TemporaryTravel();
 							tempTravel.setPassengerId(passenger.getId());
 							tempTravel.setDeviceId(position.get(0).getDeviceId());
 							if(p.getMode()!=ENTER && p.getMode()!=ONDESTROY)
 								tempTravel.addDetectedPos(p);
-						}
+						}else
+							tempTravel.addDetectedPos(p);
 					}
 				}
 
@@ -169,6 +191,58 @@ public class AppServiceImpl implements AppService{
 		if(tempTravel.getSizeOfDetectedPosition()>0)
 			tempTravelRepo.save(tempTravel);
 		posRepo.insert(position);
+	}
+
+	
+
+	@Override
+	public List<DetectedPosition> getMyPositions(String userEmail, long start, long end) {
+		return posRepo.getMyPositions(userEmail, start, end);
+	}
+
+	@Override
+	public List<BusStop> getAllBusStop() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Path> getAllPaths() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<PathWithTime> getAllPathsWithTime() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Bus> getAllBus() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+
+	@Override
+	public void saveComments(List<Comment> comments, String userEmail) {
+		
+		for(Comment c: comments){
+			c.setUserEmail(userEmail);
+			c.setDate(date.format(c.getTimestamp()));
+			c.setTime(time.format(c.getTimestamp()));
+		}
+		commentRepo.save(comments);
+	}
+	
+	@Override
+	public List<Comment> getComments(String lastId) {
+		if(lastId==null || lastId.isEmpty()){
+			return commentRepo.getLastComments();
+		}else{
+			return commentRepo.getCommentsAfterId(lastId);
+		}
 	}
 
 	private void saveTravel(TemporaryTravel tempTravel) {
@@ -244,43 +318,14 @@ public class AppServiceImpl implements AppService{
 			return NOT_ON_BUS;
 	}
 
-	private boolean containsMovementPosition(List<DetectedPosition> positions) {
-		for(DetectedPosition p : positions){
-			int mode = p.getMode();
-			if(mode==IN_VEHICLE || mode==ON_BICYCLE || mode==ON_FOOT || mode==WALKING || mode==RUNNING || mode==STILL)
-				return true;
-		}
-		return false;
-	}
-
-	@Override
-	public List<DetectedPosition> getMyPositions(String userEmail, long start, long end) {
-		return posRepo.getMyPositions(userEmail, start, end);
-	}
-
-	@Override
-	public List<BusStop> getAllBusStop() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Path> getAllPaths() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<PathWithTime> getAllPathsWithTime() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Bus> getAllBus() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	private boolean containsMovementPosition(List<DetectedPosition> positions) {
+//		for(DetectedPosition p : positions){
+//			int mode = p.getMode();
+//			if(mode==IN_VEHICLE || mode==ON_BICYCLE || mode==ON_FOOT || mode==WALKING || mode==RUNNING || mode==STILL)
+//				return true;
+//		}
+//		return false;
+//	}
 
 	private double distFrom(double lat1, double lng1, double lat2, double lng2) {
 		double earthRadius = 6371000; // meters

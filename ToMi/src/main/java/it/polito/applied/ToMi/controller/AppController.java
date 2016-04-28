@@ -21,6 +21,7 @@ import it.polito.applied.ToMi.exception.ForbiddenException;
 import it.polito.applied.ToMi.exception.NotFoundException;
 import it.polito.applied.ToMi.pojo.Bus;
 import it.polito.applied.ToMi.pojo.BusStop;
+import it.polito.applied.ToMi.pojo.Comment;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.Passenger;
 import it.polito.applied.ToMi.pojo.Path;
@@ -76,7 +77,7 @@ public class AppController extends BaseController{
 	@PreAuthorize("hasRole('ROLE_APP')")
 	@RequestMapping(value="/v1/position", method=RequestMethod.POST)
 	@ResponseStatus(value = HttpStatus.CREATED)
-	public void savePosition(@RequestBody List<DetectedPosition> positions, @RequestHeader(required=true, value="user") @Email String userEmail) throws BadRequestException, ForbiddenException {
+	public void savePosition(@RequestBody List<DetectedPosition> positions, @RequestHeader(required=true, value="user")  String userEmail) throws BadRequestException, ForbiddenException {
 		Passenger p = passRepo.findByEmail(userEmail);
 		if(p==null)
 			throw new ForbiddenException("Operation not allowed");
@@ -135,5 +136,28 @@ public class AppController extends BaseController{
 		if(p==null)
 			throw new NotFoundException("User not found");
 		return appService.getAllBus();
+	}
+	
+	@PreAuthorize("hasRole('ROLE_APP')")
+	@RequestMapping(value="/v1/comment", method=RequestMethod.POST)
+	@ResponseStatus(value = HttpStatus.CREATED)
+	public void postComment(@RequestBody List<Comment> comments, @RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
+		Passenger p = passRepo.findByEmail(userEmail);
+		if(p==null)
+			throw new NotFoundException("User not found");
+		
+		appService.saveComments(comments, userEmail);
+	}
+	
+	@PreAuthorize("hasRole('ROLE_APP')")
+	@RequestMapping(value="/v1/comment", method=RequestMethod.GET)
+	@ResponseStatus(value = HttpStatus.OK)
+	public List<Comment> getComment(@RequestParam(value = "last", required=false) String lastId, @RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
+		Passenger p = passRepo.findByEmail(userEmail);
+		if(p==null)
+			throw new NotFoundException("User not found");
+		
+		return appService.getComments(lastId);
+		
 	}
 }
