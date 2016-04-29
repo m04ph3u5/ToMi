@@ -16,7 +16,7 @@ public class Travel {
 	private double lengthAccuracy;
 	private Date start;
 	private Date end;
-	private List<DetectedPosition> positions;
+	private List<PartialTravel> partials;
 	
 	
 	public Date getEnd() {
@@ -58,19 +58,17 @@ public class Travel {
 	public String getId() {
 		return id;
 	}
-	public List<DetectedPosition> getPositions() {
-		return positions;
-	}
-	public void setPositions(List<DetectedPosition> positions) {
-		this.positions = positions;
-	}
 	public boolean isOnBus() {
 		return isOnBus;
 	}
 	public void setOnBus(boolean isOnBus) {
 		this.isOnBus = isOnBus;
 	}
-	
-		
+	public List<PartialTravel> getPartials() {
+		return partials;
+	}
+	public void setPartials(List<PartialTravel> partials) {
+		this.partials = partials;
+	}
 	
 }

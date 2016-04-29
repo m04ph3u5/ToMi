@@ -1,6 +1,8 @@
 package it.polito.applied.ToMi.service;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -12,6 +14,8 @@ import it.polito.applied.ToMi.pojo.Bus;
 import it.polito.applied.ToMi.pojo.BusStop;
 import it.polito.applied.ToMi.pojo.Comment;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
+import it.polito.applied.ToMi.pojo.InfoPosition;
+import it.polito.applied.ToMi.pojo.PartialTravel;
 import it.polito.applied.ToMi.pojo.Passenger;
 import it.polito.applied.ToMi.pojo.Path;
 import it.polito.applied.ToMi.pojo.PathWithTime;
@@ -65,17 +69,19 @@ public class AppServiceImpl implements AppService{
 	public final int EXIT=10;
 	public final int ONCREATE=11;
 	public final int ONDESTROY=12;
-
-	private final int ON_BUS=0;
-	private final int NOT_ON_BUS=1;
-	private final int INVALID=2;
+	private final int ON_BUS=15;
 
 	private final int NOPOSITION=1000;
 
-	//3h Time in millis 
-	private final long THREE_HOURS=10800000;
 	//20minutes in millis
 	private final long TWENTY_MINUTES=1200000;
+	//1minute in millis
+	private final long ONE_MINUTE=60000;
+	//3minutes in millis
+	private final long THREE_MINUTES=180000;
+	//5minutes in millis
+	private final long FIVE_MINUTES=300000;
+	
 
 	private SimpleDateFormat date;
 	private SimpleDateFormat time;
@@ -105,86 +111,20 @@ public class AppServiceImpl implements AppService{
 				p.setUserEmail(passenger.getEmail());
 				DetectedPosition last = tempTravel.getLastPosition();
 
-				/*Se il log dell'app contiene un beaconId vuol dire che con relativa certezza l'utente si trovava su un pullman. Questo criterio ha priorità
-				 * massima rispetto a tutti gli altri. È l'informazione più attendibile che possiamo ottenere.
-				 * In questo caso considero uno stesso viaggio formato da log che hanno lo stesso beaconId e che hanno una distanza temporale tra un log 
-				 * ed un altro, non superiore alle tre ore*/
-				if(p.getBeaconId()!=null && !p.getBeaconId().isEmpty()){
-					if(last==null){
-						tempTravel.addDetectedPos(p);
-					}else{
-						if(last.getBeaconId().equals(p.getBeaconId()) && (p.getTimestamp().getTime()-last.getTimestamp().getTime() <= THREE_HOURS)){
-							tempTravel.addDetectedPos(p);
-						}else{
-							saveTravel(tempTravel);
-							tempTravel = new TemporaryTravel();
-							tempTravel.setPassengerId(passenger.getId());
-							tempTravel.setDeviceId(position.get(0).getDeviceId());
-							tempTravel.addDetectedPos(p);
-						}
-					}
-					/*Il log non contiene il beaconId. Ciò significa che non sono su un pullman*/	
-				}else{
-					if(last==null){
+				if(last==null && p.getMode()!=ENTER && p.getMode()!=ONDESTROY)
+					tempTravel.addDetectedPos(p);
+				else{
+					if(p.getMode()==ENTER || p.getMode()==ONDESTROY || (p.getTimestamp().getTime()-last.getTimestamp().getTime()>TWENTY_MINUTES)){
+						saveTravel(tempTravel);
+						tempTravel = new TemporaryTravel();
+						tempTravel.setPassengerId(passenger.getId());
+						tempTravel.setDeviceId(position.get(0).getDeviceId());
 						if(p.getMode()!=ENTER && p.getMode()!=ONDESTROY)
 							tempTravel.addDetectedPos(p);
 					}else{
-						//TODO valutare condizioni uscita e fine viaggio (oltre a EXIT
-						if((last.getBeaconId()!=null && !last.getBeaconId().isEmpty()) || p.getMode()==EXIT
-								|| (p.getTimestamp().getTime()-last.getTimestamp().getTime()>TWENTY_MINUTES)){
-							saveTravel(tempTravel);
-							tempTravel = new TemporaryTravel();
-							tempTravel.setPassengerId(passenger.getId());
-							tempTravel.setDeviceId(position.get(0).getDeviceId());
-							if(p.getMode()!=ENTER && p.getMode()!=ONDESTROY)
-								tempTravel.addDetectedPos(p);
-						}else
-							tempTravel.addDetectedPos(p);
+						tempTravel.addDetectedPos(p);
 					}
 				}
-
-
-
-
-
-				//				int mode = p.getMode();
-				//				switch(mode){
-				//					case ENTER:{	//ENTER
-				//						if(numActualPos>0){
-				//							tempTravel.addDetectedPos(p);
-				//							saveTravel(tempTravel);
-				//							tempTravel.clear();
-				//						}
-				//						break;
-				//					}
-				//					case EXIT:{ 	//EXIT
-				//						if(numActualPos>0){
-				//							saveTravel(tempTravel);
-				//							tempTravel.clear();
-				//						}
-				//						tempTravel.addDetectedPos(p);
-				//						break;
-				//					}
-				//					case ONCREATE:{	//ONCREATE
-				//						if(numActualPos>0){
-				//							saveTravel(tempTravel);
-				//							tempTravel.clear();
-				//						}
-				//						tempTravel.addDetectedPos(p);
-				//						break;
-				//					}
-				//					case ONDESTROY:{	//ONDESTROY
-				//						if(numActualPos>0){
-				//							tempTravel.addDetectedPos(p);
-				//							saveTravel(tempTravel);
-				//							tempTravel.clear();
-				//						}
-				//						break;	
-				//					}
-				//					default : {
-				//						tempTravel.addDetectedPos(p);
-				//					}
-				//				}
 			}
 		}
 
@@ -246,50 +186,197 @@ public class AppServiceImpl implements AppService{
 	}
 
 	private void saveTravel(TemporaryTravel tempTravel) {
-		// TODO Auto-generated method stub
-		if(tempTravel.getId()!=null && !tempTravel.getId().isEmpty())
-			tempTravelRepo.delete(tempTravel.getId());
-
-		/*
-		 * 0 - total travel (known exit and enter)
-		 * 1 - partial start travel (unknown exit, know enter)
-		 * 2 - partial end travel (known exit, unknown enter)
-		 * 3 - invalid travel (absence of movement mode or unknown enter and exit or too short travel).
-		 * */
-		int travelType = recognizeTravel(tempTravel.getDetectedPosList()); 
-
-		if(travelType!=INVALID){
+		
+		List<PartialTravel> partials = new LinkedList<PartialTravel>();
+		List<DetectedPosition> positions = tempTravel.getDetectedPosList();
+		boolean atLeastOneBusTravel = false;
+		if(positions.size()>2){
+			
+			PartialTravel currentPartial = null;
+			
+			for(DetectedPosition p : positions){
+				if(currentPartial==null){
+					currentPartial = new PartialTravel();
+					currentPartial.setStart(p.getTimestamp());
+					if(p.getBeaconId()!=null && !p.getBeaconId().isEmpty()){
+						p.setMode(ON_BUS);
+						atLeastOneBusTravel=true;
+						currentPartial.setBeaconId(p.getBeaconId());
+					}else{
+						currentPartial.setMode(p.getMode());
+						currentPartial.setBeaconId("");
+					}
+					InfoPosition i = new InfoPosition(p);
+					currentPartial.addInfoPosition(i);
+				}else{
+					if(p.getBeaconId()!=null && !p.getBeaconId().isEmpty()){
+						if(currentPartial.getBeaconId().equals(p.getBeaconId())){
+							InfoPosition i = new InfoPosition(p);
+							currentPartial.addInfoPosition(i);
+						}else{
+							currentPartial.setEnd(currentPartial.getAllPositions().get(currentPartial.getAllPositions().size()-1).getTimestamp());
+							lengthOfPartial(currentPartial);
+							partials.add(currentPartial);
+							currentPartial = new PartialTravel();
+							currentPartial.setStart(p.getTimestamp());
+							if(p.getBeaconId()!=null && !p.getBeaconId().isEmpty()){
+								p.setMode(ON_BUS);
+								atLeastOneBusTravel=true;
+								currentPartial.setBeaconId(p.getBeaconId());
+							}else{
+								currentPartial.setMode(p.getMode());
+								currentPartial.setBeaconId("");
+							}
+							InfoPosition i = new InfoPosition(p);
+							currentPartial.addInfoPosition(i);
+						}
+					}else if(isMovement(p.getMode())){
+						if(!isMovement(currentPartial.getMode())){
+							currentPartial.setMode(p.getMode());
+							InfoPosition i = new InfoPosition(p);
+							currentPartial.addInfoPosition(i);
+						}else{
+							if(p.getMode()==currentPartial.getMode()){
+								InfoPosition i = new InfoPosition(p);
+								currentPartial.addInfoPosition(i);
+							}else{
+								currentPartial.setEnd(currentPartial.getAllPositions().get(currentPartial.getAllPositions().size()-1).getTimestamp());
+								lengthOfPartial(currentPartial);
+								partials.add(currentPartial);
+								currentPartial = new PartialTravel();
+								currentPartial.setStart(p.getTimestamp());
+								if(p.getBeaconId()!=null && !p.getBeaconId().isEmpty()){
+									p.setMode(ON_BUS);
+									currentPartial.setBeaconId(p.getBeaconId());
+								}else{
+									currentPartial.setMode(p.getMode());
+									currentPartial.setBeaconId("");
+								}
+								InfoPosition i = new InfoPosition(p);
+								currentPartial.addInfoPosition(i);
+							}
+						}
+					}else{
+						InfoPosition i = new InfoPosition(p);
+						currentPartial.addInfoPosition(i);
+					}
+				}
+				
+			}
+		}
+			
+		for(int i=0;i<partials.size();i++){
+			PartialTravel p = partials.get(i);
+			if(!isValidStep(p)){
+				aggregateStep(i, partials);
+			}
+		}
+		
+		if(partials.size()>0){
 			Travel travel = new Travel();
 			travel.setPassengerId(tempTravel.getPassengerId());
-			travel.setStart(tempTravel.getDetectedPosList().get(0).getTimestamp());
-			travel.setEnd(tempTravel.getDetectedPosList().get(tempTravel.getDetectedPosList().size()-1).getTimestamp());
-			switch(travelType){
-			case ON_BUS:{
-				travel.setOnBus(true);
-				break;
-			}
-			case NOT_ON_BUS:{
-				travel.setOnBus(false);
-				break;
-			}
-			}
-			travel.setPositions(tempTravel.getDetectedPosList());
-			calculateDistance(travel);
+			travel.setStart(partials.get(0).getStart());
+			travel.setEnd(partials.get(partials.size()-1).getEnd());
+			travel.setOnBus(atLeastOneBusTravel);
+			travel.setPartials(partials);
+			lengthOfTravel(travel);
 			travelRepo.save(travel);
 		}
-
+		
+		if(tempTravel.getId()!=null && !tempTravel.getId().isEmpty())
+			tempTravelRepo.delete(tempTravel.getId());
 	}
 
+	private void aggregateStep(int i, List<PartialTravel> partials) {
+		PartialTravel prev = null, next=null, toAggregate=null;
+		
+		toAggregate = partials.get(i);
+		if(i>0)
+			prev = partials.get(i-1);
+		if(i<partials.size()-1)
+			next = partials.get(i+1);
+		
+		if(prev!=null && next!=null && prev.getMode()==next.getMode()){
+			PartialTravel newPartial = new PartialTravel();
+			newPartial.setMode(prev.getMode());
+			newPartial.setStart(prev.getStart());
+			newPartial.setEnd(next.getEnd());
+			newPartial.setBeaconId(prev.getBeaconId());
+			List<InfoPosition> positions = new ArrayList<InfoPosition>();
+			positions.addAll(prev.getAllPositions());
+			positions.addAll(toAggregate.getAllPositions());
+			positions.addAll(next.getAllPositions());
+			newPartial.setAllPositions(positions);
+			lengthOfPartial(newPartial);
+			partials.add(i-1, newPartial);
+			partials.remove(prev);
+			partials.remove(toAggregate);
+			partials.remove(next);
+		}else{
+			//TODO trovare un criterio più furbo in questo caso
+			partials.remove(i);
+		}
+	}
 
-	private void calculateDistance(Travel travel) {
+	private boolean isValidStep(PartialTravel p) {
+		int mode = p.getMode();
+		long duration = getDuration(p);
+		switch(mode){
+		case IN_VEHICLE : {
+			if(duration>FIVE_MINUTES)
+				return true;
+			else 
+				return false;
+		}
+		case ON_BICYCLE : {
+			if(duration>THREE_MINUTES)
+				return true;
+			else 
+				return false;
+		}
+		case ON_FOOT : {
+			if(duration>ONE_MINUTE)
+				return true;
+			else 
+				return false;
+		}
+		case RUNNING : {
+			if(duration>ONE_MINUTE)
+				return true;
+			else 
+				return false;
+		}
+		case WALKING : {
+			if(duration>ONE_MINUTE)
+				return true;
+			else 
+				return false;
+		}
+		case ON_BUS : {
+			if(duration>THREE_MINUTES)
+				return true;
+			else
+				return false;
+		}
+		}
+		return false;
+	}
+
+	private long getDuration(PartialTravel p) {
+		if(p!=null && p.getStart()!=null && p.getEnd()!=null){
+			return p.getEnd().getTime()-p.getStart().getTime();
+		}
+		return 0;
+	}
+
+	private void lengthOfPartial(PartialTravel partial){
 		double distance=0d;
 		int sameDistancePoints=0;
-		
-		if(travel!=null){
-			List<DetectedPosition> points = travel.getPositions();
+		if(partial!=null){
+			List<InfoPosition> points = partial.getAllPositions();
 			if(points.size()>1){
-				DetectedPosition before = points.get(0);
-				DetectedPosition actual = null;
+				InfoPosition before = points.get(0);
+				InfoPosition actual = null;
 				for(int i=1; i<points.size(); i++){
 					actual = points.get(i);
 					if(before.getPosition().getLat()==actual.getPosition().getLat() 
@@ -300,32 +387,23 @@ public class AppServiceImpl implements AppService{
 					}
 					before = actual;
 				}
-				travel.setLengthTravel(distance);
-				travel.setLengthAccuracy(100-((sameDistancePoints*100)/points.size()));
+				partial.setLengthTravel(distance);
+				partial.setLengthAccuracy(100-((sameDistancePoints*100)/points.size()));
 			}
 		}
-
-		
 	}
 
-	private int recognizeTravel(List<DetectedPosition> positions) {
-		if(positions.size()<=2)
-			return INVALID;
-
-		if(positions.get(0).getBeaconId()!=null && !positions.get(0).getBeaconId().isEmpty())
-			return ON_BUS;
-		else
-			return NOT_ON_BUS;
+	private void lengthOfTravel(Travel travel) {
+		double length=0;
+		double accuracy=0;
+		for(PartialTravel p : travel.getPartials()){
+			length+=p.getLengthTravel();
+			accuracy+=(p.getLengthAccuracy()*p.getLengthTravel());
+		}
+		accuracy/=length;
+		travel.setLengthTravel(length);
+		travel.setLengthAccuracy(accuracy);
 	}
-
-//	private boolean containsMovementPosition(List<DetectedPosition> positions) {
-//		for(DetectedPosition p : positions){
-//			int mode = p.getMode();
-//			if(mode==IN_VEHICLE || mode==ON_BICYCLE || mode==ON_FOOT || mode==WALKING || mode==RUNNING || mode==STILL)
-//				return true;
-//		}
-//		return false;
-//	}
 
 	private double distFrom(double lat1, double lng1, double lat2, double lng2) {
 		double earthRadius = 6371000; // meters
@@ -339,6 +417,13 @@ public class AppServiceImpl implements AppService{
 		double dist = earthRadius * c;
 
 		return dist;
+	}
+
+	private boolean isMovement(int mode) {
+		if(mode==IN_VEHICLE || mode==ON_BICYCLE || mode==ON_FOOT || mode==WALKING || mode==RUNNING)
+			return true;
+		
+		return false;
 	}
 
 }
