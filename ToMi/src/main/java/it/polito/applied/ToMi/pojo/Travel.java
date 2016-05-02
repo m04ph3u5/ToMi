@@ -10,16 +10,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Travel {
 	@Id
 	private String id;
-	private boolean startIsKnown;
-	private boolean endIsKnown;
+	private boolean isOnBus;
 	private String passengerId;
-	private double initialLat;
-	private double endLat;
-	private double initialLng;
-	private double endLng;
+	private double lengthTravel;
+	private double lengthAccuracy;
 	private Date start;
 	private Date end;
-	private List<PartialTravel> partialTravels;
+	private List<PartialTravel> partials;
 	
 	
 	public Date getEnd() {
@@ -30,69 +27,27 @@ public class Travel {
 		this.end = end;
 	}
 
-	public double getInitialLat() {
-		return initialLat;
+	public double getLengthTravel() {
+		return lengthTravel;
 	}
 
-	public void setInitialLat(double initialLat) {
-		this.initialLat = initialLat;
+	public void setLengthTravel(double lengthTravel) {
+		this.lengthTravel = lengthTravel;
 	}
 
-	public double getEndLat() {
-		return endLat;
+	public double getLengthAccuracy() {
+		return lengthAccuracy;
 	}
 
-	public void setEndLat(double endLat) {
-		this.endLat = endLat;
+	public void setLengthAccuracy(double lengthAccuracy) {
+		this.lengthAccuracy = lengthAccuracy;
 	}
-
-	public double getInitialLng() {
-		return initialLng;
-	}
-
-	public void setInitialLng(double initialLng) {
-		this.initialLng = initialLng;
-	}
-
-	public double getEndLng() {
-		return endLng;
-	}
-
-	public void setEndLng(double endLng) {
-		this.endLng = endLng;
-	}
-
-	public List<PartialTravel> getPartialTravels() {
-		return partialTravels;
-	}
-
-	public void setPartialTravels(List<PartialTravel> partialTravels) {
-		this.partialTravels = partialTravels;
-	}
-	
-	public void addPartialTravel(PartialTravel p){
-		this.partialTravels.add(p);
-	}
-
 	public Date getStart() {
 		return start;
 	}
 
 	public void setStart(Date start) {
 		this.start = start;
-	}
-
-	public boolean isStartIsKnown() {
-		return startIsKnown;
-	}
-	public void setStartIsKnown(boolean startIsKnown) {
-		this.startIsKnown = startIsKnown;
-	}
-	public boolean isEndIsKnown() {
-		return endIsKnown;
-	}
-	public void setEndIsKnown(boolean endIsKnown) {
-		this.endIsKnown = endIsKnown;
 	}
 	public String getPassengerId() {
 		return passengerId;
@@ -103,7 +58,17 @@ public class Travel {
 	public String getId() {
 		return id;
 	}
-	
-		
+	public boolean isOnBus() {
+		return isOnBus;
+	}
+	public void setOnBus(boolean isOnBus) {
+		this.isOnBus = isOnBus;
+	}
+	public List<PartialTravel> getPartials() {
+		return partials;
+	}
+	public void setPartials(List<PartialTravel> partials) {
+		this.partials = partials;
+	}
 	
 }
