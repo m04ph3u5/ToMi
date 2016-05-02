@@ -55,7 +55,6 @@ public class PartialTravel {
 		this.end = end;
 	}
 
-
 	public String getId() {
 		return id;
 	}
