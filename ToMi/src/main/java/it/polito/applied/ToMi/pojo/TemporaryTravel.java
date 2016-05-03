@@ -17,6 +17,7 @@ public class TemporaryTravel {
 	private String passengerId;
 	private String deviceId;
 	private List<DetectedPosition> detectedPosList;
+	private int missingPoint;
 	
 	public TemporaryTravel(){
 		super();
@@ -64,6 +65,19 @@ public class TemporaryTravel {
 
 	public void setDeviceId(String deviceId) {
 		this.deviceId = deviceId;
+	}
+	
+	
+	public int getMissingPoint() {
+		return missingPoint;
+	}
+
+	public void setMissingPoint(int missingPoint) {
+		this.missingPoint = missingPoint;
+	}
+
+	public void addMissingPoint(){
+		missingPoint++;
 	}
 	
 	public void clear(){

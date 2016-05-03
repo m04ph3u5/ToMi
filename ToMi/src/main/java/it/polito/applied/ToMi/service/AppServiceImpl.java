@@ -72,15 +72,18 @@ public class AppServiceImpl implements AppService{
 	private final int ON_BUS=15;
 
 	private final int NOPOSITION=1000;
+	private final int STILL_THREESHOLD = 100;  
 
 	//20minutes in millis
 	private final long TWENTY_MINUTES=1200000;
 	//1minute in millis
 	private final long ONE_MINUTE=60000;
 	//3minutes in millis
-	private final long THREE_MINUTES=120000;
+	private final long THREE_MINUTES=180000;
 	//5minutes in millis
-	private final long FIVE_MINUTES=180000;
+	private final long FIVE_MINUTES=300000;
+	
+	private final long ACCURACY_TIME_THREESHOLD=1000;
 	
 
 	private SimpleDateFormat date;
@@ -107,23 +110,25 @@ public class AppServiceImpl implements AppService{
 		for(DetectedPosition p : position){
 			//Se il log che mi arriva dall'app non ha una posizione valida, lo salvo all'interno del repo delle detectedPosition (log) ma non lo considero
 			//per la costruzione di viaggi
-			if(p.getPosition().getLat()!=NOPOSITION){
-				p.setUserEmail(passenger.getEmail());
-				DetectedPosition last = tempTravel.getLastPosition();
+			p.setUserEmail(passenger.getEmail());
+			DetectedPosition last = tempTravel.getLastPosition();
+			
+			if(p.getPosition().getLat()==NOPOSITION)
+				tempTravel.addMissingPoint();
 
-				if(last==null && p.getMode()!=ENTER && p.getMode()!=ONDESTROY)
-					tempTravel.addDetectedPos(p);
-				else{
-					if(p.getMode()==ENTER || p.getMode()==ONDESTROY || (p.getTimestamp().getTime()-last.getTimestamp().getTime()>TWENTY_MINUTES)){
-						saveTravel(tempTravel);
-						tempTravel = new TemporaryTravel();
-						tempTravel.setPassengerId(passenger.getId());
-						tempTravel.setDeviceId(position.get(0).getDeviceId());
-						if(p.getMode()!=ENTER && p.getMode()!=ONDESTROY)
-							tempTravel.addDetectedPos(p);
-					}else{
+			if(last==null && p.getMode()!=ENTER && p.getMode()!=ONDESTROY && p.getPosition().getLat()!=NOPOSITION)
+				tempTravel.addDetectedPos(p);
+			else{
+				if(last!=null && (p.getMode()==ENTER || p.getMode()==ONDESTROY || (p.getTimestamp().getTime()-last.getTimestamp().getTime()>TWENTY_MINUTES))){
+					saveTravel(tempTravel);
+					tempTravel = new TemporaryTravel();
+					tempTravel.setPassengerId(passenger.getId());
+					tempTravel.setDeviceId(position.get(0).getDeviceId());
+					if(p.getMode()!=ENTER && p.getMode()!=ONDESTROY && p.getPosition().getLat()!=NOPOSITION)
 						tempTravel.addDetectedPos(p);
-					}
+				}else{
+					if(p.getPosition().getLat()!=NOPOSITION)
+						tempTravel.addDetectedPos(p);
 				}
 			}
 		}
@@ -255,6 +260,8 @@ public class AppServiceImpl implements AppService{
 					}else{
 						InfoPosition i = new InfoPosition(p);
 						currentPartial.addInfoPosition(i);
+						if(currentPartial.getMode()==EXIT && p.getMode()==STILL)
+							currentPartial.setMode(STILL);
 					}
 				}
 				
@@ -265,13 +272,18 @@ public class AppServiceImpl implements AppService{
 				partials.add(currentPartial);
 			}
 		}
-			
+		
+		System.out.println("SAVING TRAVEL...");
 		for(int i=0;i<partials.size();i++){
 			PartialTravel p = partials.get(i);
+			
+			System.out.print("Partial "+(i+1)+", mode: "+p.getMode()+" size: "+p.getAllPositions().size()+", length: "+p.getLengthTravel()+"\n");
+			
 			if(!isValidStep(p)){
 				aggregateStep(i, partials);
 			}
 		}
+		System.out.println("-----");
 		
 		if(partials.size()>0){
 			Travel travel = new Travel();
@@ -280,7 +292,7 @@ public class AppServiceImpl implements AppService{
 			travel.setEnd(partials.get(partials.size()-1).getEnd());
 			travel.setOnBus(atLeastOneBusTravel);
 			travel.setPartials(partials);
-			lengthOfTravel(travel);
+			lengthOfTravel(travel, tempTravel.getMissingPoint());
 			travelRepo.save(travel);
 		}
 		
@@ -315,9 +327,9 @@ public class AppServiceImpl implements AppService{
 			partials.remove(next);
 		}else{
 			if(prev!=null && next!=null){
-				int prevSize = prev.getAllPositions().size();
-				int nextSize = next.getAllPositions().size();
-				if(prevSize>nextSize){
+				long prevTimeDistance = toAggregate.getStart().getTime()-prev.getEnd().getTime();
+				long nextTimeDistance = next.getStart().getTime()-toAggregate.getEnd().getTime();
+				if(prevTimeDistance<nextTimeDistance){
 					PartialTravel newPartial = new PartialTravel();
 					newPartial.setMode(prev.getMode());
 					newPartial.setStart(prev.getStart());
@@ -424,6 +436,14 @@ public class AppServiceImpl implements AppService{
 			else
 				return false;
 		}
+		case STILL : {
+			if(p.getLengthTravel()>STILL_THREESHOLD && duration>ONE_MINUTE){
+				p.setMode(UNKNOWN);
+				return true;
+			}
+			else 
+				return false;
+		}
 		}
 		return false;
 	}
@@ -446,8 +466,9 @@ public class AppServiceImpl implements AppService{
 				InfoPosition actual = null;
 				for(int i=1; i<points.size(); i++){
 					actual = points.get(i);
+					long intervalTime = actual.getTimestamp().getTime()-before.getTimestamp().getTime();
 					if(before.getPosition().getLat()==actual.getPosition().getLat() 
-							&& before.getPosition().getLng()==actual.getPosition().getLng()){
+							&& before.getPosition().getLng()==actual.getPosition().getLng() && intervalTime>ACCURACY_TIME_THREESHOLD){
 						sameDistancePoints++;
 					}else{
 						distance+=distFrom(before.getPosition().getLat(), before.getPosition().getLng(), actual.getPosition().getLat(), actual.getPosition().getLng());
@@ -455,20 +476,33 @@ public class AppServiceImpl implements AppService{
 					before = points.get(i);
 				}
 				partial.setLengthTravel(distance);
-				partial.setLengthAccuracy(100-((sameDistancePoints*100)/points.size()));
+				if(distance>0)
+					partial.setLengthAccuracy(100-((sameDistancePoints*100)/points.size()));
+				else
+					partial.setLengthAccuracy(0);
 			}
 		}
 	}
 
-	private void lengthOfTravel(Travel travel) {
+	private void lengthOfTravel(Travel travel, int missingPoints) {
 		double length=0;
 		double accuracy=0;
+		int points=0;
+		long totalDuration=0;
+		long haveAccuracyDuration=0;
 		for(PartialTravel p : travel.getPartials()){
 			length+=p.getLengthTravel();
 			accuracy+=(p.getLengthAccuracy()*p.getLengthTravel());
+			points+=p.getAllPositions().size();
+			long actualDuration = getDuration(p);
+			totalDuration+=actualDuration;
+			if(p.getLengthTravel()>0)
+				haveAccuracyDuration+=actualDuration;
+				
 		}
-		if(length!=0)
-			accuracy/=length;
+		if(length!=0){
+			accuracy=(accuracy/length)*(points/(points+missingPoints))*(haveAccuracyDuration/totalDuration);
+		}
 		else
 			accuracy=0;
 		travel.setLengthTravel(length);
