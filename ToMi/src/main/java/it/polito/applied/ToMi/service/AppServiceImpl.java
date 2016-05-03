@@ -147,8 +147,7 @@ public class AppServiceImpl implements AppService{
 
 	@Override
 	public List<BusStop> getAllBusStop() {
-		// TODO Auto-generated method stub
-		return null;
+		return busStopRepo.findAll();
 	}
 
 	@Override
@@ -292,6 +291,7 @@ public class AppServiceImpl implements AppService{
 			travel.setEnd(partials.get(partials.size()-1).getEnd());
 			travel.setOnBus(atLeastOneBusTravel);
 			travel.setPartials(partials);
+			travel.setDay(date.format(travel.getStart()));
 			lengthOfTravel(travel, tempTravel.getMissingPoint());
 			travelRepo.save(travel);
 		}

@@ -8,33 +8,21 @@ public class BusStop {
 	@Id
 	private String id;
 	private String idStop;
+	private String name;
 	private double lat;
 	private double lng;
-	private String address;
-	private String hour;  
-	private String minute; //nel caso non ci siano questi due campi, l'oggetto identifica genericamente la fermata 
 	
-	
-	public String getHour() {
-		return hour;
-	}
-	public void setHour(String hour) {
-		this.hour = hour;
-	}
-	public String getMinute() {
-		return minute;
-	}
-	public void setMinute(String minute) {
-		this.minute = minute;
-	}
-	public String getId() {
-		return id;
-	}
 	public String getIdStop() {
 		return idStop;
 	}
 	public void setIdStop(String idStop) {
 		this.idStop = idStop;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
 	}
 	public double getLat() {
 		return lat;
@@ -48,12 +36,10 @@ public class BusStop {
 	public void setLng(double lng) {
 		this.lng = lng;
 	}
-	public String getAddress() {
-		return address;
+	public String getId() {
+		return id;
 	}
-	public void setAddress(String address) {
-		this.address = address;
-	}
+	
 	
 	
 	

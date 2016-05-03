@@ -4,12 +4,14 @@ import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
 public class Travel {
 	@Id
 	private String id;
+	@Indexed
 	private boolean isOnBus;
 	private String passengerId;
 	private double lengthTravel;
@@ -17,6 +19,7 @@ public class Travel {
 	private Date start;
 	private Date end;
 	private List<PartialTravel> partials;
+	private String day;
 	
 	
 	public Date getEnd() {
@@ -69,6 +72,14 @@ public class Travel {
 	}
 	public void setPartials(List<PartialTravel> partials) {
 		this.partials = partials;
+	}
+
+	public String getDay() {
+		return day;
+	}
+
+	public void setDay(String day) {
+		this.day = day;
 	}
 	
 }
