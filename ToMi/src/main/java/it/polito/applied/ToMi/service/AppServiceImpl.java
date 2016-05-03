@@ -78,9 +78,9 @@ public class AppServiceImpl implements AppService{
 	//1minute in millis
 	private final long ONE_MINUTE=60000;
 	//3minutes in millis
-	private final long THREE_MINUTES=180000;
+	private final long THREE_MINUTES=120000;
 	//5minutes in millis
-	private final long FIVE_MINUTES=300000;
+	private final long FIVE_MINUTES=180000;
 	
 
 	private SimpleDateFormat date;
@@ -263,6 +263,12 @@ public class AppServiceImpl implements AppService{
 				}
 				
 			}
+			if(currentPartial.getAllPositions().size()>0){
+				currentPartial.setEnd(currentPartial.getAllPositions().get(currentPartial.getAllPositions().size()-1).getTimestamp());
+				System.out.println("ADD LAST");
+				lengthOfPartial(currentPartial);
+				partials.add(currentPartial);
+			}
 		}
 			
 		for(int i=0;i<partials.size();i++){
@@ -313,14 +319,80 @@ public class AppServiceImpl implements AppService{
 			partials.remove(toAggregate);
 			partials.remove(next);
 		}else{
-			//TODO trovare un criterio più furbo in questo caso
-			partials.remove(i);
+			if(prev!=null && next!=null){
+				int prevSize = prev.getAllPositions().size();
+				int nextSize = next.getAllPositions().size();
+				if(prevSize>nextSize){
+					PartialTravel newPartial = new PartialTravel();
+					newPartial.setMode(prev.getMode());
+					newPartial.setStart(prev.getStart());
+					newPartial.setEnd(toAggregate.getEnd());
+					newPartial.setBeaconId(prev.getBeaconId());
+					List<InfoPosition> positions = new ArrayList<InfoPosition>();
+					positions.addAll(prev.getAllPositions());
+					positions.addAll(toAggregate.getAllPositions());
+					newPartial.setAllPositions(positions);
+					System.out.println("CALL LENGTH IN AGGREGATE");
+					lengthOfPartial(newPartial);
+					partials.add(i-1, newPartial);
+					partials.remove(prev);
+					partials.remove(toAggregate);
+				}else{
+					PartialTravel newPartial = new PartialTravel();
+					newPartial.setMode(next.getMode());
+					newPartial.setStart(toAggregate.getStart());
+					newPartial.setEnd(next.getEnd());
+					newPartial.setBeaconId(next.getBeaconId());
+					List<InfoPosition> positions = new ArrayList<InfoPosition>();
+					positions.addAll(toAggregate.getAllPositions());
+					positions.addAll(next.getAllPositions());
+					newPartial.setAllPositions(positions);
+					System.out.println("CALL LENGTH IN AGGREGATE");
+					lengthOfPartial(newPartial);
+					partials.add(i, newPartial);
+					partials.remove(toAggregate);
+					partials.remove(next);
+				}
+			}else if(prev!=null){
+				PartialTravel newPartial = new PartialTravel();
+				newPartial.setMode(prev.getMode());
+				newPartial.setStart(prev.getStart());
+				newPartial.setEnd(toAggregate.getEnd());
+				newPartial.setBeaconId(prev.getBeaconId());
+				List<InfoPosition> positions = new ArrayList<InfoPosition>();
+				positions.addAll(prev.getAllPositions());
+				positions.addAll(toAggregate.getAllPositions());
+				newPartial.setAllPositions(positions);
+				System.out.println("CALL LENGTH IN AGGREGATE");
+				lengthOfPartial(newPartial);
+				partials.add(i-1, newPartial);
+				partials.remove(prev);
+				partials.remove(toAggregate);
+			}else if(next!=null){
+				PartialTravel newPartial = new PartialTravel();
+				newPartial.setMode(next.getMode());
+				newPartial.setStart(toAggregate.getStart());
+				newPartial.setEnd(next.getEnd());
+				newPartial.setBeaconId(next.getBeaconId());
+				List<InfoPosition> positions = new ArrayList<InfoPosition>();
+				positions.addAll(toAggregate.getAllPositions());
+				positions.addAll(next.getAllPositions());
+				newPartial.setAllPositions(positions);
+				System.out.println("CALL LENGTH IN AGGREGATE");
+				lengthOfPartial(newPartial);
+				partials.add(i, newPartial);
+				partials.remove(toAggregate);
+				partials.remove(next);
+			}else{
+				partials.remove(i);
+			}
 		}
 	}
 
 	private boolean isValidStep(PartialTravel p) {
 		int mode = p.getMode();
 		long duration = getDuration(p);
+		System.out.println("IS VALID: mode "+mode+", duration: "+duration);
 		switch(mode){
 		case IN_VEHICLE : {
 			if(duration>FIVE_MINUTES)
@@ -370,6 +442,7 @@ public class AppServiceImpl implements AppService{
 	}
 
 	private void lengthOfPartial(PartialTravel partial){
+		System.out.println("###############IN "+partial.getAllPositions().size());
 		double distance=0d;
 		int sameDistancePoints=0;
 		if(partial!=null){
@@ -385,7 +458,7 @@ public class AppServiceImpl implements AppService{
 					}else{
 						distance+=distFrom(before.getPosition().getLat(), before.getPosition().getLng(), actual.getPosition().getLat(), actual.getPosition().getLng());
 					}
-					before = actual;
+					before = points.get(i);
 				}
 				partial.setLengthTravel(distance);
 				partial.setLengthAccuracy(100-((sameDistancePoints*100)/points.size()));
@@ -400,7 +473,10 @@ public class AppServiceImpl implements AppService{
 			length+=p.getLengthTravel();
 			accuracy+=(p.getLengthAccuracy()*p.getLengthTravel());
 		}
-		accuracy/=length;
+		if(length!=0)
+			accuracy/=length;
+		else
+			accuracy=0;
 		travel.setLengthTravel(length);
 		travel.setLengthAccuracy(accuracy);
 	}
@@ -415,7 +491,7 @@ public class AppServiceImpl implements AppService{
 		* Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2));
 		double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 		double dist = earthRadius * c;
-
+		System.out.println("########DISTANZA: "+dist);
 		return dist;
 	}
 
@@ -424,6 +500,37 @@ public class AppServiceImpl implements AppService{
 			return true;
 		
 		return false;
+	}
+	
+	private void printMode(DetectedPosition p){
+		switch(p.getMode()){
+		case IN_VEHICLE : System.out.println("IN_VEHICLE");
+						  break;
+		case ON_BICYCLE : System.out.println("ON_BICYCLE");
+		                  break;
+		case ON_FOOT : System.out.println("ON_FOOT");
+					   break;
+		case STILL : System.out.println("STILL");
+					 break;
+		case UNKNOWN : System.out.println("UNKNOWN");
+		   			   break;
+		case TILTING : System.out.println("TILTING");
+		   			   break;
+		case WALKING : System.out.println("WALKING");
+		   			   break;
+		case RUNNING : System.out.println("RUNNING");
+		   			   break;
+		case ENTER : System.out.println("ENTER");
+		   			 break;
+		case EXIT : System.out.println("EXIT");
+		   			break;
+		case ONCREATE : System.out.println("ONCREATE");
+						break;
+		case ONDESTROY : System.out.println("ONDESTROY");
+		   				 break;
+		case ON_BUS : System.out.println("ON_BUS");
+		   			  break;
+		}
 	}
 
 }
