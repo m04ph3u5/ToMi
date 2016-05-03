@@ -219,14 +219,10 @@ public class AppServiceImpl implements AppService{
 							partials.add(currentPartial);
 							currentPartial = new PartialTravel();
 							currentPartial.setStart(p.getTimestamp());
-							if(p.getBeaconId()!=null && !p.getBeaconId().isEmpty()){
-								p.setMode(ON_BUS);
-								atLeastOneBusTravel=true;
-								currentPartial.setBeaconId(p.getBeaconId());
-							}else{
-								currentPartial.setMode(p.getMode());
-								currentPartial.setBeaconId("");
-							}
+							p.setMode(ON_BUS);
+							atLeastOneBusTravel=true;
+							currentPartial.setBeaconId(p.getBeaconId());
+							
 							InfoPosition i = new InfoPosition(p);
 							currentPartial.addInfoPosition(i);
 						}
@@ -265,7 +261,6 @@ public class AppServiceImpl implements AppService{
 			}
 			if(currentPartial.getAllPositions().size()>0){
 				currentPartial.setEnd(currentPartial.getAllPositions().get(currentPartial.getAllPositions().size()-1).getTimestamp());
-				System.out.println("ADD LAST");
 				lengthOfPartial(currentPartial);
 				partials.add(currentPartial);
 			}
@@ -332,7 +327,7 @@ public class AppServiceImpl implements AppService{
 					positions.addAll(prev.getAllPositions());
 					positions.addAll(toAggregate.getAllPositions());
 					newPartial.setAllPositions(positions);
-					System.out.println("CALL LENGTH IN AGGREGATE");
+					
 					lengthOfPartial(newPartial);
 					partials.add(i-1, newPartial);
 					partials.remove(prev);
@@ -347,7 +342,6 @@ public class AppServiceImpl implements AppService{
 					positions.addAll(toAggregate.getAllPositions());
 					positions.addAll(next.getAllPositions());
 					newPartial.setAllPositions(positions);
-					System.out.println("CALL LENGTH IN AGGREGATE");
 					lengthOfPartial(newPartial);
 					partials.add(i, newPartial);
 					partials.remove(toAggregate);
@@ -363,7 +357,7 @@ public class AppServiceImpl implements AppService{
 				positions.addAll(prev.getAllPositions());
 				positions.addAll(toAggregate.getAllPositions());
 				newPartial.setAllPositions(positions);
-				System.out.println("CALL LENGTH IN AGGREGATE");
+				
 				lengthOfPartial(newPartial);
 				partials.add(i-1, newPartial);
 				partials.remove(prev);
@@ -378,7 +372,7 @@ public class AppServiceImpl implements AppService{
 				positions.addAll(toAggregate.getAllPositions());
 				positions.addAll(next.getAllPositions());
 				newPartial.setAllPositions(positions);
-				System.out.println("CALL LENGTH IN AGGREGATE");
+			
 				lengthOfPartial(newPartial);
 				partials.add(i, newPartial);
 				partials.remove(toAggregate);
@@ -392,7 +386,7 @@ public class AppServiceImpl implements AppService{
 	private boolean isValidStep(PartialTravel p) {
 		int mode = p.getMode();
 		long duration = getDuration(p);
-		System.out.println("IS VALID: mode "+mode+", duration: "+duration);
+		
 		switch(mode){
 		case IN_VEHICLE : {
 			if(duration>FIVE_MINUTES)
@@ -442,7 +436,7 @@ public class AppServiceImpl implements AppService{
 	}
 
 	private void lengthOfPartial(PartialTravel partial){
-		System.out.println("###############IN "+partial.getAllPositions().size());
+		
 		double distance=0d;
 		int sameDistancePoints=0;
 		if(partial!=null){
@@ -491,7 +485,7 @@ public class AppServiceImpl implements AppService{
 		* Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2));
 		double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 		double dist = earthRadius * c;
-		System.out.println("########DISTANZA: "+dist);
+		
 		return dist;
 	}
 

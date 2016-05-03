@@ -6,21 +6,22 @@ import java.util.List;
 
 public class PartialTravel {
 
-	private String id;
 	private int mode;
-	private int beaconId;
+	private String beaconId;
 	private Date start;
 	private Date end;
-	private List<DetectedPosition> allPositions;
+	private List<InfoPosition> allPositions;
+	private double lengthTravel;
+	private double lengthAccuracy;
 	
 	public PartialTravel(){
 		super();
+		allPositions = new ArrayList<InfoPosition>();
 	}
 	
 
-	public PartialTravel(String id, int mode, int beaconId, Date start, Date end, List<DetectedPosition> allPositions) {
-		super();
-		this.id = id;
+	public PartialTravel(int mode, String beaconId, Date start, Date end, List<InfoPosition> allPositions) {
+		this();
 		this.mode = mode;
 		this.beaconId = beaconId;
 		
@@ -29,11 +30,11 @@ public class PartialTravel {
 		this.allPositions = allPositions;
 	}
 
-	public List<DetectedPosition> getAllPositions() {
+	public List<InfoPosition> getAllPositions() {
 		return allPositions;
 	}
 
-	public void setAllPositions(List<DetectedPosition> allPositions) {
+	public void setAllPositions(List<InfoPosition> allPositions) {
 		this.allPositions = allPositions;
 	}
 
@@ -55,26 +56,37 @@ public class PartialTravel {
 	public void setEnd(Date end) {
 		this.end = end;
 	}
-
-	public String getId() {
-		return id;
-	}
-	public void setId(String id) {
-		this.id = id;
-	}
 	public int getMode() {
 		return mode;
 	}
 	public void setMode(int mode) {
 		this.mode = mode;
 	}
-	public int getBeaconId() {
+	public String getBeaconId() {
 		return beaconId;
 	}
-	public void setBeaconId(int beaconId) {
+	public void setBeaconId(String beaconId) {
 		this.beaconId = beaconId;
 	}
+
+	public double getLengthTravel() {
+		return lengthTravel;
+	}
+
+	public void setLengthTravel(double lengthTravel) {
+		this.lengthTravel = lengthTravel;
+	}
+
+	public double getLengthAccuracy() {
+		return lengthAccuracy;
+	}
+
+	public void setLengthAccuracy(double lengthAccuracy) {
+		this.lengthAccuracy = lengthAccuracy;
+	}
 	
-	
+	public void addInfoPosition(InfoPosition i){
+		allPositions.add(i);
+	}
 	
 }
