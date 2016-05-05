@@ -2,6 +2,7 @@ package it.polito.applied.ToMi.service;
 
 import java.util.List;
 
+import it.polito.applied.ToMi.exception.BadRequestException;
 import it.polito.applied.ToMi.pojo.Bus;
 import it.polito.applied.ToMi.pojo.BusStop;
 import it.polito.applied.ToMi.pojo.Comment;
@@ -30,4 +31,6 @@ public interface AppService {
 	public List<Comment> getComments(String lastId);
 
 	public DailyData getDailyData(String passengerId);
+	
+	public void saveAnswerToComments(String id, List<Comment> answers, String userEmail) throws BadRequestException ;
 }
