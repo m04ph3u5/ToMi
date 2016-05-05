@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.GeoResult;
 import org.springframework.stereotype.Service;
 
+import it.polito.applied.ToMi.exception.BadRequestException;
 import it.polito.applied.ToMi.pojo.Bus;
 import it.polito.applied.ToMi.pojo.BusStop;
 import it.polito.applied.ToMi.pojo.BusTravel;
@@ -159,6 +160,16 @@ public class AppServiceImpl implements AppService{
 			c.setTime(time.format(c.getTimestamp()));
 		}
 		commentRepo.save(comments);
+	}
+	
+	@Override
+	public void saveAnswerToComments(String id, List<Comment> answers, String userEmail) throws BadRequestException {
+		// TODO Auto-generated method stub
+		Comment father = commentRepo.findById(id);
+		if(father==null)
+			throw new BadRequestException("Commento non trovato!");
+		father.addAnswers(answers);
+		commentRepo.save(father);
 	}
 	
 	@Override
@@ -626,5 +637,7 @@ public class AppServiceImpl implements AppService{
 		DailyData dd = travelRepo.getDailyData(passengerId);
 		return null;
 	}
+
+	
 
 }

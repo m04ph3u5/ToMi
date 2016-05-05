@@ -1,6 +1,7 @@
 package it.polito.applied.ToMi.pojo;
 
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -20,6 +21,18 @@ public class Comment {
 	private String time;
 	private String category;
 	
+	private List<Comment> answers;
+	
+	public void addAnswers(List<Comment> answers){
+		this.answers.addAll(answers);
+	}
+	
+	public List<Comment> getAnswers() {
+		return answers;
+	}
+	public void setAnswers(List<Comment> answers) {
+		this.answers = answers;
+	}
 	public String getUserEmail() {
 		return userEmail;
 	}

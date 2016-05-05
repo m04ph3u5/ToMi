@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoDataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -125,6 +126,17 @@ public class AppController extends BaseController{
 			throw new NotFoundException("User not found");
 		
 		appService.saveComments(comments, userEmail);
+	}
+	
+	@PreAuthorize("hasRole('ROLE_APP')")
+	@RequestMapping(value="/v1/comment/{id}", method=RequestMethod.PUT)
+	@ResponseStatus(value = HttpStatus.CREATED)
+	public void postAnswerToComment(@PathVariable String id, @RequestBody List<Comment> answers, @RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException, BadRequestException {
+		Passenger p = passRepo.findByEmail(userEmail);
+		if(p==null)
+			throw new NotFoundException("User not found");
+		
+		appService.saveAnswerToComments(id, answers, userEmail);
 	}
 	
 	@PreAuthorize("hasRole('ROLE_APP')")
