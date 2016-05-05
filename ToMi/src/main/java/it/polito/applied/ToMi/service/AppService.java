@@ -5,6 +5,7 @@ import java.util.List;
 import it.polito.applied.ToMi.pojo.Bus;
 import it.polito.applied.ToMi.pojo.BusStop;
 import it.polito.applied.ToMi.pojo.Comment;
+import it.polito.applied.ToMi.pojo.DailyData;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.Passenger;
 import it.polito.applied.ToMi.pojo.Path;
@@ -27,4 +28,6 @@ public interface AppService {
 	public void saveComments(List<Comment> comments, String userEmail);
 
 	public List<Comment> getComments(String lastId);
+
+	public DailyData getDailyData(String passengerId);
 }

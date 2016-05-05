@@ -22,6 +22,7 @@ import it.polito.applied.ToMi.exception.NotFoundException;
 import it.polito.applied.ToMi.pojo.Bus;
 import it.polito.applied.ToMi.pojo.BusStop;
 import it.polito.applied.ToMi.pojo.Comment;
+import it.polito.applied.ToMi.pojo.DailyData;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.Passenger;
 import it.polito.applied.ToMi.pojo.Path;
@@ -158,6 +159,18 @@ public class AppController extends BaseController{
 			throw new NotFoundException("User not found");
 		
 		return appService.getComments(lastId);
+		
+	}
+	
+	@PreAuthorize("hasRole('ROLE_APP')")
+	@RequestMapping(value="/v1/dailyData", method=RequestMethod.GET)
+	@ResponseStatus(value = HttpStatus.OK)
+	public DailyData getDailyData(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
+		Passenger p = passRepo.findByEmail(userEmail);
+		if(p==null)
+			throw new NotFoundException("User not found");
+		
+		return appService.getDailyData(p.getId());
 		
 	}
 }

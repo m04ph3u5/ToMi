@@ -1,6 +1,7 @@
 package it.polito.applied.ToMi.pojo;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
@@ -9,8 +10,13 @@ public class BusStop {
 	private String id;
 	private String idStop;
 	private String name;
-	private double lat;
-	private double lng;
+	@GeoSpatialIndexed
+	private double[] location;
+	private int idProg;
+	
+	public BusStop(){
+		location = new double[2];
+	}
 	
 	public String getIdStop() {
 		return idStop;
@@ -25,19 +31,37 @@ public class BusStop {
 		this.name = name;
 	}
 	public double getLat() {
-		return lat;
+		if(location.length>0)
+			return location[0];
+		else
+			return 1000;
 	}
 	public void setLat(double lat) {
-		this.lat = lat;
+		location[0]=lat;
 	}
 	public double getLng() {
-		return lng;
+		if(location.length>1)
+			return location[1];
+		else
+			return 1000;
 	}
 	public void setLng(double lng) {
-		this.lng = lng;
+		location[1]=lng;
 	}
 	public String getId() {
 		return id;
+	}
+	public int getIdProg() {
+		return idProg;
+	}
+	public void setIdProg(int idProg) {
+		this.idProg = idProg;
+	}
+	public double[] getLocation() {
+		return location;
+	}
+	public void setLocation(double[] location) {
+		this.location = location;
 	}
 	
 	

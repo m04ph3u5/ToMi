@@ -8,11 +8,14 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.geo.GeoResult;
 import org.springframework.stereotype.Service;
 
 import it.polito.applied.ToMi.pojo.Bus;
 import it.polito.applied.ToMi.pojo.BusStop;
+import it.polito.applied.ToMi.pojo.BusTravel;
 import it.polito.applied.ToMi.pojo.Comment;
+import it.polito.applied.ToMi.pojo.DailyData;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.InfoPosition;
 import it.polito.applied.ToMi.pojo.PartialTravel;
@@ -21,12 +24,10 @@ import it.polito.applied.ToMi.pojo.Path;
 import it.polito.applied.ToMi.pojo.PathWithTime;
 import it.polito.applied.ToMi.pojo.TemporaryTravel;
 import it.polito.applied.ToMi.pojo.Travel;
-import it.polito.applied.ToMi.repository.BusRepository;
 import it.polito.applied.ToMi.repository.BusStopRepository;
+import it.polito.applied.ToMi.repository.BusTravelRepository;
 import it.polito.applied.ToMi.repository.CommentRepository;
 import it.polito.applied.ToMi.repository.DetectedPositionRepository;
-import it.polito.applied.ToMi.repository.PathRepository;
-import it.polito.applied.ToMi.repository.PathWithTimeRepository;
 import it.polito.applied.ToMi.repository.TemporaryTravelRepository;
 import it.polito.applied.ToMi.repository.TravelRepository;
 
@@ -37,16 +38,10 @@ public class AppServiceImpl implements AppService{
 	private DetectedPositionRepository posRepo;
 
 	@Autowired
-	private PathRepository pathRepo;
-
-	@Autowired
-	private PathWithTimeRepository pathWithTimeRepo;
-
-	@Autowired
 	private BusStopRepository busStopRepo;
 
 	@Autowired 
-	private BusRepository busRepo;
+	private BusTravelRepository busTravelRepo;
 
 	@Autowired
 	private TemporaryTravelRepository tempTravelRepo;
@@ -220,6 +215,8 @@ public class AppServiceImpl implements AppService{
 						}else{
 							currentPartial.setEnd(currentPartial.getAllPositions().get(currentPartial.getAllPositions().size()-1).getTimestamp());
 							lengthOfPartial(currentPartial);
+							if(currentPartial.getBeaconId()!=null && !currentPartial.getBeaconId().isEmpty())
+								currentPartial.setMode(ON_BUS);
 							partials.add(currentPartial);
 							currentPartial = new PartialTravel();
 							currentPartial.setStart(p.getTimestamp());
@@ -230,6 +227,19 @@ public class AppServiceImpl implements AppService{
 							InfoPosition i = new InfoPosition(p);
 							currentPartial.addInfoPosition(i);
 						}
+					}else if((p.getBeaconId()==null || p.getBeaconId().isEmpty()) 
+							&& currentPartial.getBeaconId()!=null && !currentPartial.getBeaconId().isEmpty()){
+						currentPartial.setEnd(currentPartial.getAllPositions().get(currentPartial.getAllPositions().size()-1).getTimestamp());
+						lengthOfPartial(currentPartial);
+						currentPartial.setMode(ON_BUS);
+						partials.add(currentPartial);
+						currentPartial = new PartialTravel();
+						currentPartial.setStart(p.getTimestamp());
+						currentPartial.setMode(p.getMode());
+						currentPartial.setBeaconId("");
+						
+						InfoPosition i = new InfoPosition(p);
+						currentPartial.addInfoPosition(i);
 					}else if(isMovement(p.getMode())){
 						if(!isMovement(currentPartial.getMode())){
 							currentPartial.setMode(p.getMode());
@@ -242,6 +252,8 @@ public class AppServiceImpl implements AppService{
 							}else{
 								currentPartial.setEnd(currentPartial.getAllPositions().get(currentPartial.getAllPositions().size()-1).getTimestamp());
 								lengthOfPartial(currentPartial);
+								if(currentPartial.getBeaconId()!=null && !currentPartial.getBeaconId().isEmpty())
+									currentPartial.setMode(ON_BUS);
 								partials.add(currentPartial);
 								currentPartial = new PartialTravel();
 								currentPartial.setStart(p.getTimestamp());
@@ -268,21 +280,19 @@ public class AppServiceImpl implements AppService{
 			if(currentPartial.getAllPositions().size()>0){
 				currentPartial.setEnd(currentPartial.getAllPositions().get(currentPartial.getAllPositions().size()-1).getTimestamp());
 				lengthOfPartial(currentPartial);
+				if(currentPartial.getBeaconId()!=null && !currentPartial.getBeaconId().isEmpty())
+					currentPartial.setMode(ON_BUS);
 				partials.add(currentPartial);
 			}
 		}
 		
-		System.out.println("SAVING TRAVEL...");
 		for(int i=0;i<partials.size();i++){
 			PartialTravel p = partials.get(i);
-			
-			System.out.print("Partial "+(i+1)+", mode: "+p.getMode()+" size: "+p.getAllPositions().size()+", length: "+p.getLengthTravel()+"\n");
 			
 			if(!isValidStep(p)){
 				aggregateStep(i, partials);
 			}
 		}
-		System.out.println("-----");
 		
 		if(partials.size()>0){
 			Travel travel = new Travel();
@@ -294,10 +304,74 @@ public class AppServiceImpl implements AppService{
 			travel.setDay(date.format(travel.getStart()));
 			lengthOfTravel(travel, tempTravel.getMissingPoint());
 			travelRepo.save(travel);
+			if(travel.isOnBus()){
+				for(PartialTravel p: travel.getPartials()){
+					if(p.getBeaconId()!=null && !p.getBeaconId().isEmpty()){
+						saveBusTravel(p, travel.getPassengerId(), travel.getDay());
+					}
+				}
+			}
 		}
 		
 		if(tempTravel.getId()!=null && !tempTravel.getId().isEmpty())
 			tempTravelRepo.delete(tempTravel.getId());
+	}
+
+	private void saveBusTravel(PartialTravel p, String passengerId, String day) {
+		BusTravel b = new BusTravel();
+		b.setBeaconId(p.getBeaconId());
+		b.setPassengerId(passengerId);
+		b.setDay(day);
+		List<BusStop> stops = getBusStops(p);
+		if(stops==null){
+			System.out.println("NO ONE STOP");
+			return;
+		}
+		b.setStops(stops);
+		if(stops.get(0).getIdProg()>=0){
+			b.setDirection(false);//MITO
+		}else{
+			b.setDirection(true);//TOMI
+		}
+		b.setTimestamp(p.getStart());
+		busTravelRepo.save(b);
+	}
+
+	private List<BusStop> getBusStops(PartialTravel p) {
+		List<BusStop> stops = new ArrayList<BusStop>();
+		List<GeoResult<BusStop>> first = busStopRepo.findNear(p.getAllPositions().get(0)).getContent();
+		List<GeoResult<BusStop>> last = busStopRepo.findNear(p.getAllPositions().get(p.getAllPositions().size()-1)).getContent();
+		
+		
+		if(first!=null && first.size()>0 && last!=null && last.size()>0){
+			if(first.get(0).getContent().getIdProg()<last.get(0).getContent().getIdProg() && first.get(0).getContent().getIdProg()*last.get(0).getContent().getIdProg()>0){
+				stops.add(0, first.get(0).getContent());
+				stops.addAll(busStopRepo.findBetweenFirstAndLast(first.get(0).getContent(), last.get(0).getContent()));
+				stops.add(last.get(0).getContent());
+			}else if(last.size()>1 && 
+					first.get(0).getContent().getIdProg()<last.get(1).getContent().getIdProg() && 
+					first.get(0).getContent().getIdProg()*last.get(1).getContent().getIdProg()>0){
+				stops.add(0, first.get(0).getContent());
+				stops.addAll(busStopRepo.findBetweenFirstAndLast(first.get(0).getContent(), last.get(1).getContent()));
+				stops.add(last.get(1).getContent());
+			}else if(first.size()>1 && 
+					first.get(1).getContent().getIdProg()<last.get(0).getContent().getIdProg() && 
+					first.get(1).getContent().getIdProg()*last.get(0).getContent().getIdProg()>0){
+				stops.add(0, first.get(1).getContent());
+				stops.addAll(busStopRepo.findBetweenFirstAndLast(first.get(1).getContent(), last.get(0).getContent()));
+				stops.add(last.get(0).getContent());
+			}else if(first.size()>1 && last.size()>1 && 
+					first.get(1).getContent().getIdProg()<last.get(1).getContent().getIdProg() && 
+					first.get(1).getContent().getIdProg()*last.get(1).getContent().getIdProg()>0){
+				stops.add(0, first.get(1).getContent());
+				stops.addAll(busStopRepo.findBetweenFirstAndLast(first.get(1).getContent(), last.get(1).getContent()));
+				stops.add(last.get(1).getContent());
+			}
+			
+			return stops;
+		}
+		else
+			return null;
 	}
 
 	private void aggregateStep(int i, List<PartialTravel> partials) {
@@ -559,6 +633,12 @@ public class AppServiceImpl implements AppService{
 		case ON_BUS : System.out.println("ON_BUS");
 		   			  break;
 		}
+	}
+
+	@Override
+	public DailyData getDailyData(String passengerId) {
+		DailyData dd = travelRepo.getDailyData(passengerId);
+		return null;
 	}
 
 }
