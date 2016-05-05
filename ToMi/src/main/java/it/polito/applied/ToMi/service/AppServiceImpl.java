@@ -20,8 +20,6 @@ import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.InfoPosition;
 import it.polito.applied.ToMi.pojo.PartialTravel;
 import it.polito.applied.ToMi.pojo.Passenger;
-import it.polito.applied.ToMi.pojo.Path;
-import it.polito.applied.ToMi.pojo.PathWithTime;
 import it.polito.applied.ToMi.pojo.TemporaryTravel;
 import it.polito.applied.ToMi.pojo.Travel;
 import it.polito.applied.ToMi.repository.BusStopRepository;
@@ -143,18 +141,6 @@ public class AppServiceImpl implements AppService{
 	@Override
 	public List<BusStop> getAllBusStop() {
 		return busStopRepo.findAll();
-	}
-
-	@Override
-	public List<Path> getAllPaths() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<PathWithTime> getAllPathsWithTime() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
@@ -604,7 +590,7 @@ public class AppServiceImpl implements AppService{
 		return false;
 	}
 	
-	private void printMode(DetectedPosition p){
+	private void printMode(DetectedPosition p){		
 		switch(p.getMode()){
 		case IN_VEHICLE : System.out.println("IN_VEHICLE");
 						  break;

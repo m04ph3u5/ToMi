@@ -8,8 +8,6 @@ import it.polito.applied.ToMi.pojo.Comment;
 import it.polito.applied.ToMi.pojo.DailyData;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.Passenger;
-import it.polito.applied.ToMi.pojo.Path;
-import it.polito.applied.ToMi.pojo.PathWithTime;
 
 public interface AppService {
 
@@ -18,10 +16,6 @@ public interface AppService {
 	public List<DetectedPosition> getMyPositions(String userEmail, long start, long end);
 
 	public List<BusStop> getAllBusStop();
-
-	public List<Path> getAllPaths();
-
-	public List<PathWithTime> getAllPathsWithTime();
 
 	public List<Bus> getAllBus();
 

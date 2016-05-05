@@ -25,8 +25,6 @@ import it.polito.applied.ToMi.pojo.Comment;
 import it.polito.applied.ToMi.pojo.DailyData;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.Passenger;
-import it.polito.applied.ToMi.pojo.Path;
-import it.polito.applied.ToMi.pojo.PathWithTime;
 import it.polito.applied.ToMi.repository.PassengerRepository;
 import it.polito.applied.ToMi.service.AppService;
 
@@ -106,27 +104,6 @@ public class AppController extends BaseController{
 			throw new NotFoundException("User not found");
 		return appService.getAllBusStop();
 		
-	}
-	
-	@PreAuthorize("hasRole('ROLE_APP')")
-	@RequestMapping(value="/v1/path", method=RequestMethod.GET)
-	@ResponseStatus(value = HttpStatus.OK)
-	public List<Path> getPaths(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
-		Passenger p = passRepo.findByEmail(userEmail);
-		if(p==null)
-			throw new NotFoundException("User not found");
-		return appService.getAllPaths();
-		
-	}
-	
-	@PreAuthorize("hasRole('ROLE_APP')")
-	@RequestMapping(value="/v1/pathWithTime", method=RequestMethod.GET)
-	@ResponseStatus(value = HttpStatus.OK)
-	public List<PathWithTime> getPathsWithTime(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
-		Passenger p = passRepo.findByEmail(userEmail);
-		if(p==null)
-			throw new NotFoundException("User not found");
-		return appService.getAllPathsWithTime();
 	}
 	
 	@PreAuthorize("hasRole('ROLE_APP')")

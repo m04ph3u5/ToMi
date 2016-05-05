@@ -9,7 +9,10 @@ public class Bus {
 	@Id
 	private String id;
 	private String idBus;
-	private String idLinea;
+	private String idLine;
+	private String nameLine;
+	private String beaconId;
+	private int capacity;
 	
 	public String getIdBus() {
 		return idBus;
@@ -18,13 +21,37 @@ public class Bus {
 		this.idBus = idBus;
 	}
 	public String getIdLinea() {
-		return idLinea;
+		return idLine;
 	}
-	public void setIdLinea(String idLinea) {
-		this.idLinea = idLinea;
+	public void setIdLinea(String idLine) {
+		this.idLine = idLine;
 	}
 	public String getId() {
 		return id;
+	}
+	public String getIdLine() {
+		return idLine;
+	}
+	public void setIdLine(String idLine) {
+		this.idLine = idLine;
+	}
+	public String getNameLine() {
+		return nameLine;
+	}
+	public void setNameLine(String nameLine) {
+		this.nameLine = nameLine;
+	}
+	public String getBeaconId() {
+		return beaconId;
+	}
+	public void setBeaconId(String beaconId) {
+		this.beaconId = beaconId;
+	}
+	public int getCapacity() {
+		return capacity;
+	}
+	public void setCapacity(int capacity) {
+		this.capacity = capacity;
 	}
 	
 	

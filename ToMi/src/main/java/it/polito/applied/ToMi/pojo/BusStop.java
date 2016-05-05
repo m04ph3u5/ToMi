@@ -1,5 +1,8 @@
 package it.polito.applied.ToMi.pojo;
 
+import java.util.Calendar;
+import java.util.Date;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -9,6 +12,9 @@ public class BusStop {
 	@Id
 	private String id;
 	private String idStop;
+	private String idLine;
+	private String idRun;
+	private long time;
 	private String name;
 	@GeoSpatialIndexed
 	private double[] location;
@@ -63,7 +69,38 @@ public class BusStop {
 	public void setLocation(double[] location) {
 		this.location = location;
 	}
+
+	public String getIdLine() {
+		return idLine;
+	}
+
+	public void setIdLine(String idLine) {
+		this.idLine = idLine;
+	}
+
+	public String getIdRun() {
+		return idRun;
+	}
+
+	public void setIdRun(String idRun) {
+		this.idRun = idRun;
+	}
+
+	public long getTime() {
+		return time;
+	}
+
+	public void setTime(long time) {
+		this.time = time;
+	}
 	
+	public void setTime(Date d){
+		Calendar c = Calendar.getInstance();
+		c.setTime(d);
+		int h = c.get(Calendar.HOUR_OF_DAY);
+		int m = c.get(Calendar.MINUTE);
+		time = h*60*60*1000 + m*60*1000;
+	}
 	
 	
 	
