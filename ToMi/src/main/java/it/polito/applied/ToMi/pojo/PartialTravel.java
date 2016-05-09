@@ -13,6 +13,7 @@ public class PartialTravel {
 	private List<InfoPosition> allPositions;
 	private double lengthTravel;
 	private double lengthAccuracy;
+	private String idRun;
 	
 	public PartialTravel(){
 		super();
@@ -29,6 +30,18 @@ public class PartialTravel {
 		this.end = end;
 		this.allPositions = allPositions;
 	}
+
+	
+	
+	public String getIdRun() {
+		return idRun;
+	}
+
+
+	public void setIdRun(String idRun) {
+		this.idRun = idRun;
+	}
+
 
 	public List<InfoPosition> getAllPositions() {
 		return allPositions;

@@ -4,6 +4,17 @@ public class BusRunDetector {
 	
 	private BusStop first;
 	private BusStop last;
+	private double distanceF, distanceL;
+	private long timeF, timeL;
+	
+	public BusRunDetector(BusStop f, BusStop l, double distanceF, double distanceL, long logTimeF, long logTimeL){
+		this.first=f;
+		this.last = l;
+		this.distanceF = distanceF;
+		this.distanceL = distanceL;
+		this.timeF = Math.abs(first.getTime()-logTimeF);
+		this.timeL = Math.abs(last.getTime()-logTimeL);
+	}
 	
 	private double goodIndex=0;
 	

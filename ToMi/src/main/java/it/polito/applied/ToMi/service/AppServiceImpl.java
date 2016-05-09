@@ -2,10 +2,8 @@ package it.polito.applied.ToMi.service;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
@@ -17,7 +15,6 @@ import it.polito.applied.ToMi.exception.BadRequestException;
 import it.polito.applied.ToMi.pojo.Bus;
 import it.polito.applied.ToMi.pojo.BusRunDetector;
 import it.polito.applied.ToMi.pojo.BusStop;
-import it.polito.applied.ToMi.pojo.BusTravel;
 import it.polito.applied.ToMi.pojo.Comment;
 import it.polito.applied.ToMi.pojo.DailyData;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
@@ -307,39 +304,54 @@ public class AppServiceImpl implements AppService{
 			travel.setPartials(partials);
 			travel.setDay(date.format(travel.getStart()));
 			lengthOfTravel(travel, tempTravel.getMissingPoint());
-			travelRepo.save(travel);
+			
 			if(travel.isOnBus()){
 				for(PartialTravel p: travel.getPartials()){
 					if(p.getBeaconId()!=null && !p.getBeaconId().isEmpty()){
-						saveBusTravel(p, travel.getPassengerId(), travel.getDay());
+						saveRun(p, travel.getPassengerId(), travel.getDay());
+						
 					}
 				}
 			}
+			travelRepo.save(travel);
 		}
 		
 		if(tempTravel.getId()!=null && !tempTravel.getId().isEmpty())
 			tempTravelRepo.delete(tempTravel.getId());
 	}
-
-	private void saveBusTravel(PartialTravel p, String passengerId, String day) {
-		BusTravel b = new BusTravel();
-		b.setBeaconId(p.getBeaconId());
-		b.setPassengerId(passengerId);
-		b.setDay(day);
-		List<BusStop> stops = getBusStops(p);
-		if(stops==null){
-			System.out.println("NO ONE STOP");
-			return;
-		}
-		b.setStops(stops);
-		if(stops.get(0).getIdProg()>=0){
-			b.setDirection(false);//MITO
-		}else{
-			b.setDirection(true);//TOMI
-		}
-		b.setTimestamp(p.getStart());
-		busTravelRepo.save(b);
+	
+	/*questo metodo cerca se c'è già una corsa con quell'idRun, idLine, day salvata. Se c'è incrementa il numero di persone su quella corsa di 1 e
+	/aggiorna i valori di salite/discese delle specifiche fermate sui cui il passeggero è salito/sceso. */
+	
+	private void saveRun(PartialTravel p, String passengerId, String day){
+		List<BusStop> stops = new ArrayList<BusStop>();
+		Bus bus = busRepo.findByBeaconId(p.getBeaconId());
+		String idLine = bus.getIdLine();
+		p.setIdRun(stops.get(0).getIdRun());
 	}
+
+//	private void saveBusTravel(PartialTravel p, String passengerId, String day) {
+//		BusTravel b = new BusTravel();
+//		b.setBeaconId(p.getBeaconId());
+//		b.setPassengerId(passengerId);
+//		b.setDay(day);
+//		List<BusStop> stops = getBusStops(p);
+//		
+//		
+//		if(stops==null){
+//			System.out.println("NO ONE STOP");
+//			return;
+//		}
+//		p.setIdRun(stops.get(0).getIdRun());
+//		b.setStops(stops);
+//		if(stops.get(0).getIdProg()>=0){
+//			b.setDirection(false);//MITO
+//		}else{
+//			b.setDirection(true);//TOMI
+//		}
+//		b.setTimestamp(p.getStart());
+//		busTravelRepo.save(b);
+//	}
 
 	private List<BusStop> getBusStops(PartialTravel p) {
 		List<BusStop> stops = new ArrayList<BusStop>();
@@ -430,11 +442,14 @@ public class AppServiceImpl implements AppService{
 		List <BusRunDetector> elegibleCouples = new ArrayList<BusRunDetector>();
 		for(int i=0; i< first.size();i++){
 			for(int j=0; j<last.size(); j++){
-				if(first.get(i).getContent().getIdLine().equals(last.get(j).getContent().getIdLine())
-						&& first.get(i).getContent().getIdRun().equals(last.get(j).getContent().getIdRun())
+				if(     first.get(i).getContent().getIdRun().equals(last.get(j).getContent().getIdRun())
 						&& first.get(i).getContent().getIdProg() < last.get(j).getContent().getIdProg()){
 					
-					BusRunDetector possible = new BusRunDetector();
+					//BusStop f, BusStop l, double distanceF, double distanceL, long logTimeF, long logTimeL
+					BusRunDetector possible = new BusRunDetector( first.get(i).getContent(), last.get(j).getContent(),
+							first.get(i).getDistance().getValue(), last.get(j).getDistance().getValue(), firstPosition.getHour(), lastPosition.getHour());
+					System.out.println("getValue= "+ last.get(j).getDistance().getValue());
+					System.out.println("getNormalizedValue= "+ last.get(j).getDistance().getNormalizedValue());
 					possible.setFirst(first.get(i).getContent());
 					possible.setLast(last.get(j).getContent());
 					elegibleCouples.add(possible);
@@ -442,18 +457,15 @@ public class AppServiceImpl implements AppService{
 				}
 			}
 		}
-		BusRunDetector win = new BusRunDetector();
-		win = bestCouplePossible(elegibleCouples);
-		if(win!=null && win.getFirst()!=null && win.getLast()!=null){
-			listToReturn.add(win.getFirst());
-			listToReturn.add(win.getLast());
-		}
+		
+		
+		listToReturn = bestCouplePossible(elegibleCouples);
 		
 		return listToReturn;
 
 	}
 
-	private BusRunDetector bestCouplePossible(List<BusRunDetector> elegibleCouples){
+	private List<BusStop> bestCouplePossible(List<BusRunDetector> elegibleCouples){
 		return null;
 	}
 	
