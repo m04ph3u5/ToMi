@@ -345,18 +345,49 @@ public class AppServiceImpl implements AppService{
 		List<BusStop> stops = new ArrayList<BusStop>();
 		Bus bus = busRepo.findByBeaconId(p.getBeaconId());
 		String idLine = bus.getIdLine();
-		List<GeoResult<BusStop>> first = busStopRepo.findNear(p.getAllPositions().get(0), idLine).getContent();
-		List<GeoResult<BusStop>> last = busStopRepo.findNear(p.getAllPositions().get(p.getAllPositions().size()-1), idLine).getContent();
+		InfoPosition firstPosition=null, lastPosition=null;
+	
+		int i=0;
+		while(i<p.getAllPositions().size()){
+			firstPosition = p.getAllPositions().get(i);
+			if(firstPosition.getPosition().getLat()==NOPOSITION){
+				firstPosition = null;
+				i++;
+			}
+			else
+				break;
+		}
+		i=p.getAllPositions().size()-1;
+		while(i>=0){
+			lastPosition = p.getAllPositions().get(i);
+			if(lastPosition.getPosition().getLat()==NOPOSITION){
+				lastPosition = null;
+				i--;
+			}
+			else
+				break;
+		}
 		
-		List<BusStop> firstAndLast = getFirstLastStop(first,last);
-		
-		if(firstAndLast.size()==2){
-			BusStop firstStop = firstAndLast.get(0);
-			BusStop lastStop = firstAndLast.get(1);
-			stops.add(firstStop);
-			stops.addAll(busStopRepo.findBetweenFirstAndLast(firstStop, lastStop));
-			stops.add(lastStop);
-			return stops;
+		List<GeoResult<BusStop>> first=null, last=null;
+		if(firstPosition!=null && lastPosition!=null && firstPosition!=lastPosition 
+				&&(firstPosition.getPosition().getLat()!=lastPosition.getPosition().getLat()
+				|| firstPosition.getPosition().getLng()!=lastPosition.getPosition().getLng())){
+			
+			first = busStopRepo.findNear(p.getAllPositions().get(0), idLine).getContent();
+			last = busStopRepo.findNear(p.getAllPositions().get(p.getAllPositions().size()-1), idLine).getContent();
+			
+			List<BusStop> firstAndLast = getFirstLastStop(first, last, firstPosition, lastPosition);
+			
+			if(firstAndLast.size()==2){
+				BusStop firstStop = firstAndLast.get(0);
+				BusStop lastStop = firstAndLast.get(1);
+				stops.add(firstStop);
+				stops.addAll(busStopRepo.findBetweenFirstAndLast(firstStop, lastStop));
+				stops.add(lastStop);
+				return stops;
+			}else
+				return null;
+
 		}else
 			return null;
 		
@@ -392,7 +423,8 @@ public class AppServiceImpl implements AppService{
 //			return null;
 	}
 
-	private List<BusStop> getFirstLastStop(List<GeoResult<BusStop>> first, List<GeoResult<BusStop>> last) {
+
+	private List<BusStop> getFirstLastStop(List<GeoResult<BusStop>> first, List<GeoResult<BusStop>> last, InfoPosition firstPosition, InfoPosition lastPosition) {
 		
 		List<BusStop> listToReturn = new ArrayList<BusStop>();
 		List <BusRunDetector> elegibleCouples = new ArrayList<BusRunDetector>();
@@ -418,6 +450,7 @@ public class AppServiceImpl implements AppService{
 		}
 		
 		return listToReturn;
+
 	}
 
 	private BusRunDetector bestCouplePossible(List<BusRunDetector> elegibleCouples){

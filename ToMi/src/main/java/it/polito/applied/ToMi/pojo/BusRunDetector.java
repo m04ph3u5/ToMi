@@ -5,6 +5,8 @@ public class BusRunDetector {
 	private BusStop first;
 	private BusStop last;
 	
+	private double goodIndex=0;
+	
 	public BusStop getFirst() {
 		return first;
 	}
@@ -38,4 +40,15 @@ public class BusRunDetector {
 		else
 			return false;
 	}
+	
+	public double evaluateGoodIndex(double firstDistance, double lastDistance, long firstTime, long lastTime){
+		
+		return goodIndex;
+	}
+	public double getGoodIndex() {
+		return goodIndex;
+	}
+	
+	
+	
 }
