@@ -393,11 +393,38 @@ public class AppServiceImpl implements AppService{
 	}
 
 	private List<BusStop> getFirstLastStop(List<GeoResult<BusStop>> first, List<GeoResult<BusStop>> last) {
-		List<BusStop> stops = new ArrayList<BusStop>();
-		Map<String, BusRunDetector> map = new HashMap<String, BusRunDetector>();
-		return null;
+		
+		List<BusStop> listToReturn = new ArrayList<BusStop>();
+		List <BusRunDetector> elegibleCouples = new ArrayList<BusRunDetector>();
+		for(int i=0; i< first.size();i++){
+			for(int j=0; j<last.size(); j++){
+				if(first.get(i).getContent().getIdLine().equals(last.get(j).getContent().getIdLine())
+						&& first.get(i).getContent().getIdRun().equals(last.get(j).getContent().getIdRun())
+						&& first.get(i).getContent().getIdProg() < last.get(j).getContent().getIdProg()){
+					
+					BusRunDetector possible = new BusRunDetector();
+					possible.setFirst(first.get(i).getContent());
+					possible.setLast(last.get(j).getContent());
+					elegibleCouples.add(possible);
+					
+				}
+			}
+		}
+		BusRunDetector win = new BusRunDetector();
+		win = bestCouplePossible(elegibleCouples);
+		if(win!=null && win.getFirst()!=null && win.getLast()!=null){
+			listToReturn.add(win.getFirst());
+			listToReturn.add(win.getLast());
+		}
+		
+		return listToReturn;
 	}
 
+	private BusRunDetector bestCouplePossible(List<BusRunDetector> elegibleCouples){
+		return null;
+	}
+	
+	
 	private void aggregateStep(int i, List<PartialTravel> partials) {
 		PartialTravel prev = null, next=null, toAggregate=null;
 		
