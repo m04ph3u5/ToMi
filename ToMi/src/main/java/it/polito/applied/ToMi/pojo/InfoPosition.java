@@ -1,5 +1,6 @@
 package it.polito.applied.ToMi.pojo;
 
+import java.util.Calendar;
 import java.util.Date;
 
 public class InfoPosition {
@@ -30,5 +31,11 @@ public class InfoPosition {
 		this.position = position;
 	}
 	
-	
+	public long getHour(){
+		Calendar c = Calendar.getInstance();
+		c.setTime(timestamp);
+		int h = c.get(Calendar.HOUR_OF_DAY);
+		int m = c.get(Calendar.MINUTE);
+		return h*60*60*1000 + m*60*1000;
+	}
 }

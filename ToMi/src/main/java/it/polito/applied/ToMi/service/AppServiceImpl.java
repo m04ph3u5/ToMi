@@ -2,8 +2,10 @@ package it.polito.applied.ToMi.service;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import it.polito.applied.ToMi.exception.BadRequestException;
 import it.polito.applied.ToMi.pojo.Bus;
+import it.polito.applied.ToMi.pojo.BusRunDetector;
 import it.polito.applied.ToMi.pojo.BusStop;
 import it.polito.applied.ToMi.pojo.BusTravel;
 import it.polito.applied.ToMi.pojo.Comment;
@@ -23,6 +26,7 @@ import it.polito.applied.ToMi.pojo.PartialTravel;
 import it.polito.applied.ToMi.pojo.Passenger;
 import it.polito.applied.ToMi.pojo.TemporaryTravel;
 import it.polito.applied.ToMi.pojo.Travel;
+import it.polito.applied.ToMi.repository.BusRepository;
 import it.polito.applied.ToMi.repository.BusStopRepository;
 import it.polito.applied.ToMi.repository.BusTravelRepository;
 import it.polito.applied.ToMi.repository.CommentRepository;
@@ -50,6 +54,9 @@ public class AppServiceImpl implements AppService{
 	
 	@Autowired
 	private CommentRepository commentRepo;
+	
+	@Autowired
+	private BusRepository busRepo;
 
 	public final int IN_VEHICLE=0;
 	public final int ON_BICYCLE=1;
@@ -336,39 +343,59 @@ public class AppServiceImpl implements AppService{
 
 	private List<BusStop> getBusStops(PartialTravel p) {
 		List<BusStop> stops = new ArrayList<BusStop>();
-		List<GeoResult<BusStop>> first = busStopRepo.findNear(p.getAllPositions().get(0)).getContent();
-		List<GeoResult<BusStop>> last = busStopRepo.findNear(p.getAllPositions().get(p.getAllPositions().size()-1)).getContent();
+		Bus bus = busRepo.findByBeaconId(p.getBeaconId());
+		String idLine = bus.getIdLine();
+		List<GeoResult<BusStop>> first = busStopRepo.findNear(p.getAllPositions().get(0), idLine).getContent();
+		List<GeoResult<BusStop>> last = busStopRepo.findNear(p.getAllPositions().get(p.getAllPositions().size()-1), idLine).getContent();
 		
+		List<BusStop> firstAndLast = getFirstLastStop(first,last);
 		
-		if(first!=null && first.size()>0 && last!=null && last.size()>0){
-			if(first.get(0).getContent().getIdProg()<last.get(0).getContent().getIdProg() && first.get(0).getContent().getIdProg()*last.get(0).getContent().getIdProg()>0){
-				stops.add(0, first.get(0).getContent());
-				stops.addAll(busStopRepo.findBetweenFirstAndLast(first.get(0).getContent(), last.get(0).getContent()));
-				stops.add(last.get(0).getContent());
-			}else if(last.size()>1 && 
-					first.get(0).getContent().getIdProg()<last.get(1).getContent().getIdProg() && 
-					first.get(0).getContent().getIdProg()*last.get(1).getContent().getIdProg()>0){
-				stops.add(0, first.get(0).getContent());
-				stops.addAll(busStopRepo.findBetweenFirstAndLast(first.get(0).getContent(), last.get(1).getContent()));
-				stops.add(last.get(1).getContent());
-			}else if(first.size()>1 && 
-					first.get(1).getContent().getIdProg()<last.get(0).getContent().getIdProg() && 
-					first.get(1).getContent().getIdProg()*last.get(0).getContent().getIdProg()>0){
-				stops.add(0, first.get(1).getContent());
-				stops.addAll(busStopRepo.findBetweenFirstAndLast(first.get(1).getContent(), last.get(0).getContent()));
-				stops.add(last.get(0).getContent());
-			}else if(first.size()>1 && last.size()>1 && 
-					first.get(1).getContent().getIdProg()<last.get(1).getContent().getIdProg() && 
-					first.get(1).getContent().getIdProg()*last.get(1).getContent().getIdProg()>0){
-				stops.add(0, first.get(1).getContent());
-				stops.addAll(busStopRepo.findBetweenFirstAndLast(first.get(1).getContent(), last.get(1).getContent()));
-				stops.add(last.get(1).getContent());
-			}
-			
+		if(firstAndLast.size()==2){
+			BusStop firstStop = firstAndLast.get(0);
+			BusStop lastStop = firstAndLast.get(1);
+			stops.add(firstStop);
+			stops.addAll(busStopRepo.findBetweenFirstAndLast(firstStop, lastStop));
+			stops.add(lastStop);
 			return stops;
-		}
-		else
+		}else
 			return null;
+		
+		
+//		if(first!=null && first.size()>0 && last!=null && last.size()>0){
+//			if(first.get(0).getContent().getIdProg()<last.get(0).getContent().getIdProg() && first.get(0).getContent().getIdProg()*last.get(0).getContent().getIdProg()>0){
+//				stops.add(0, first.get(0).getContent());
+//				stops.addAll(busStopRepo.findBetweenFirstAndLast(first.get(0).getContent(), last.get(0).getContent()));
+//				stops.add(last.get(0).getContent());
+//			}else if(last.size()>1 && 
+//					first.get(0).getContent().getIdProg()<last.get(1).getContent().getIdProg() && 
+//					first.get(0).getContent().getIdProg()*last.get(1).getContent().getIdProg()>0){
+//				stops.add(0, first.get(0).getContent());
+//				stops.addAll(busStopRepo.findBetweenFirstAndLast(first.get(0).getContent(), last.get(1).getContent()));
+//				stops.add(last.get(1).getContent());
+//			}else if(first.size()>1 && 
+//					first.get(1).getContent().getIdProg()<last.get(0).getContent().getIdProg() && 
+//					first.get(1).getContent().getIdProg()*last.get(0).getContent().getIdProg()>0){
+//				stops.add(0, first.get(1).getContent());
+//				stops.addAll(busStopRepo.findBetweenFirstAndLast(first.get(1).getContent(), last.get(0).getContent()));
+//				stops.add(last.get(0).getContent());
+//			}else if(first.size()>1 && last.size()>1 && 
+//					first.get(1).getContent().getIdProg()<last.get(1).getContent().getIdProg() && 
+//					first.get(1).getContent().getIdProg()*last.get(1).getContent().getIdProg()>0){
+//				stops.add(0, first.get(1).getContent());
+//				stops.addAll(busStopRepo.findBetweenFirstAndLast(first.get(1).getContent(), last.get(1).getContent()));
+//				stops.add(last.get(1).getContent());
+//			}
+//			
+//			return stops;
+//		}
+//		else
+//			return null;
+	}
+
+	private List<BusStop> getFirstLastStop(List<GeoResult<BusStop>> first, List<GeoResult<BusStop>> last) {
+		List<BusStop> stops = new ArrayList<BusStop>();
+		Map<String, BusRunDetector> map = new HashMap<String, BusRunDetector>();
+		return null;
 	}
 
 	private void aggregateStep(int i, List<PartialTravel> partials) {
@@ -502,7 +529,7 @@ public class AppServiceImpl implements AppService{
 				return false;
 		}
 		case ON_BUS : {
-			if(duration>THREE_MINUTES)
+			if(duration>ONE_MINUTE)
 				return true;
 			else
 				return false;

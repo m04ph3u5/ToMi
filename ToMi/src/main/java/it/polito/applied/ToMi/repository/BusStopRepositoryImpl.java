@@ -21,22 +21,35 @@ public class BusStopRepositoryImpl implements CustomBusStopRepository{
 	@Autowired
 	private MongoOperations mongoOp;
 	
-	private final float SEARCH_RADIUS=0.5f;
-	private final int MAX_NUM_RESULTS=2;
+	private final int SEARCH_RADIUS=1000;
+//	private final int MAX_NUM_RESULTS=2;
+	private final int TWO_MINUTES = 120000;
+	private final int ONE_HOUR = 3600000;
 	
 	@Override
-	public GeoResults<BusStop> findNear(InfoPosition infoPosition) {
-		NearQuery q = NearQuery.near(infoPosition.getPosition().getLat(), infoPosition.getPosition().getLng())
+	public GeoResults<BusStop> findNear(InfoPosition infoPosition, String idLine) {
+		
+		NearQuery nq = NearQuery.near(infoPosition.getPosition().getLat(), infoPosition.getPosition().getLng())
 				.maxDistance(new Distance(SEARCH_RADIUS, Metrics.KILOMETERS));	
-		q.num(MAX_NUM_RESULTS);
-		return mongoOp.geoNear(q, BusStop.class);
+//		nq.num(MAX_NUM_RESULTS);
+		
+		long pTime = infoPosition.getHour();
+		Query q = new Query();
+		q.addCriteria(Criteria.where("idLine").is(idLine)
+				.andOperator(Criteria.where("time").lt(pTime+TWO_MINUTES)
+				.andOperator(Criteria.where("time").gt(pTime-ONE_HOUR))));
+		
+		nq.query(q);
+		
+		return mongoOp.geoNear(nq, BusStop.class);
 	}
 
 	@Override
 	public Collection<? extends BusStop> findBetweenFirstAndLast(BusStop first, BusStop last) {
 		Query q = new Query();
-		q.addCriteria(Criteria.where("idProg").gt(first.getIdProg())
-				.andOperator(Criteria.where("idProg").lt(last.getIdProg())));
+		q.addCriteria(Criteria.where("idRun").is(first.getIdRun())
+				.andOperator(Criteria.where("idProg").gt(first.getIdProg())
+				.andOperator(Criteria.where("idProg").lt(last.getIdProg()))));
 		q.with(new Sort(Direction.ASC,"idProg"));
 		
 		return mongoOp.find(q, BusStop.class);
