@@ -21,7 +21,7 @@ public class BusStopRepositoryImpl implements CustomBusStopRepository{
 	@Autowired
 	private MongoOperations mongoOp;
 	
-	private final int SEARCH_RADIUS=1000;
+	private final int SEARCH_RADIUS=1;
 //	private final int MAX_NUM_RESULTS=2;
 	private final int TWO_MINUTES = 120000;
 	private final int ONE_HOUR = 3600000;

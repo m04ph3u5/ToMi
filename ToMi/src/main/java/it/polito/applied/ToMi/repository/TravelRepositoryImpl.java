@@ -10,10 +10,6 @@ public class TravelRepositoryImpl implements CustomTravelRepository{
 	@Autowired
 	private MongoOperations mongoOp;
 
-	@Override
-	public DailyData getDailyData(String passengerId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 
 }

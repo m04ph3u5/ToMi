@@ -8,7 +8,7 @@ public class DailyData {
 	private List<DailyInfo> tomi;
 	private List<DailyInfo> mito;
 	
-	private DailyData(){
+	public DailyData(){
 		tomi = new ArrayList<DailyInfo>();
 		mito = new ArrayList<DailyInfo>();
 	}

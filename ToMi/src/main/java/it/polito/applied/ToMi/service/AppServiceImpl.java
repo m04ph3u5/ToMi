@@ -8,7 +8,10 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.geo.GeoResult;
+import org.springframework.data.mongodb.core.MongoDataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import it.polito.applied.ToMi.exception.BadRequestException;
@@ -17,17 +20,20 @@ import it.polito.applied.ToMi.pojo.BusRunDetector;
 import it.polito.applied.ToMi.pojo.BusStop;
 import it.polito.applied.ToMi.pojo.Comment;
 import it.polito.applied.ToMi.pojo.DailyData;
+import it.polito.applied.ToMi.pojo.DailyInfo;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.InfoPosition;
 import it.polito.applied.ToMi.pojo.PartialTravel;
 import it.polito.applied.ToMi.pojo.Passenger;
+import it.polito.applied.ToMi.pojo.Run;
+import it.polito.applied.ToMi.pojo.StopInfo;
 import it.polito.applied.ToMi.pojo.TemporaryTravel;
 import it.polito.applied.ToMi.pojo.Travel;
 import it.polito.applied.ToMi.repository.BusRepository;
 import it.polito.applied.ToMi.repository.BusStopRepository;
-import it.polito.applied.ToMi.repository.BusTravelRepository;
 import it.polito.applied.ToMi.repository.CommentRepository;
 import it.polito.applied.ToMi.repository.DetectedPositionRepository;
+import it.polito.applied.ToMi.repository.RunRepository;
 import it.polito.applied.ToMi.repository.TemporaryTravelRepository;
 import it.polito.applied.ToMi.repository.TravelRepository;
 
@@ -41,7 +47,7 @@ public class AppServiceImpl implements AppService{
 	private BusStopRepository busStopRepo;
 
 	@Autowired 
-	private BusTravelRepository busTravelRepo;
+	private RunRepository runRepo;
 
 	@Autowired
 	private TemporaryTravelRepository tempTravelRepo;
@@ -324,12 +330,45 @@ public class AppServiceImpl implements AppService{
 	/aggiorna i valori di salite/discese delle specifiche fermate sui cui il passeggero è salito/sceso. */
 	
 	private void saveRun(PartialTravel p, String passengerId, String day){
+		System.out.println(p.getAllPositions().size());
 		List<BusStop> stops = new ArrayList<BusStop>();
 		Bus bus = busRepo.findByBeaconId(p.getBeaconId());
 		String idLine = bus.getIdLine();
-		//p.setIdRun(stops.get(0).getIdRun());
 		stops = getBusStops(p, idLine);
-		
+		if(stops!=null){
+			p.setIdRun(stops.get(0).getIdRun());
+			
+			Run run = runRepo.findByIdRunAndIdLineAndDay(p.getIdRun(), idLine, day);
+			if(run==null){
+				run = new Run();
+				run.setDay(day);
+				run.setIdRun(p.getIdRun());
+				run.setIdLine(idLine);
+				if(stops.get(0).getIdProg()>=0){
+					run.setDirection(false);
+				}
+				else{
+					run.setDirection(true);
+				}
+				List<BusStop> allRunStops = busStopRepo.findByIdRun(run.getIdRun(), new Sort(Direction.ASC,"idProg"));
+				for(BusStop s : allRunStops){
+					StopInfo si = new StopInfo(s);
+					
+					if(s.getIdStop().equals(stops.get(0).getIdStop()))
+						si.setNumPassengerGetIn(1);
+					else if(s.getIdStop().equals(stops.get(stops.size()-1).getIdStop()))
+						si.setNumPassengerGetOut(1);
+					run.addStopInfo(si);
+				}
+				try{
+					runRepo.insert(run);
+				}catch(MongoDataIntegrityViolationException e){
+					runRepo.updateRun(p.getIdRun(), idLine, day, stops.get(0), stops.get(stops.size()-1));
+				}
+			}else{
+				runRepo.updateRun(p.getIdRun(), idLine, day, stops.get(0), stops.get(stops.size()-1));
+			}
+		}
 	}
 
 //	private void saveBusTravel(PartialTravel p, String passengerId, String day) {
@@ -395,6 +434,8 @@ public class AppServiceImpl implements AppService{
 			first = busStopRepo.findNear(firstPosition, idLine).getContent();
 			last = busStopRepo.findNear(lastPosition, idLine).getContent();
 			
+			System.out.println(first+" "+last);
+			
 			//con questo metodo vado a scegliere il più probabile inizio e la più probabile fine del viaggio in bus
 			List<BusStop> firstAndLast = getFirstLastStop(first, last, firstPosition, lastPosition);
 			
@@ -447,7 +488,8 @@ public class AppServiceImpl implements AppService{
 	private List<BusStop> getFirstLastStop(List<GeoResult<BusStop>> first, List<GeoResult<BusStop>> last, InfoPosition firstPosition, InfoPosition lastPosition) {
 		
 		List<BusStop> listToReturn = new ArrayList<BusStop>();
-		List <BusRunDetector> elegibleCouples = new ArrayList<BusRunDetector>();
+//		List <BusRunDetector> elegibleCouples = new ArrayList<BusRunDetector>();
+		BusRunDetector run = null;
 		for(int i=0; i< first.size();i++){
 			for(int j=0; j<last.size(); j++){
 				if(     first.get(i).getContent().getIdRun().equals(last.get(j).getContent().getIdRun())
@@ -460,27 +502,34 @@ public class AppServiceImpl implements AppService{
 					System.out.println("getNormalizedValue= "+ last.get(j).getDistance().getNormalizedValue());
 					possible.setFirst(first.get(i).getContent());
 					possible.setLast(last.get(j).getContent());
-					elegibleCouples.add(possible);
+					possible.evaluateGoodIndex();
+					if(run==null || run.getGoodIndex()>possible.getGoodIndex())
+						run = possible;
+//					elegibleCouples.add(possible);
 					
 				}
 			}
 		}
 		
 		
-		listToReturn = bestCouplePossible(elegibleCouples);
+		if(run!=null){
+			listToReturn.add(run.getFirst());
+			listToReturn.add(run.getLast());
+		}
 		
 		return listToReturn;
 
 	}
 
-	private List<BusStop> bestCouplePossible(List<BusRunDetector> elegibleCouples){
-		return null;
-	}
-	
+//	private List<BusStop> bestCouplePossible(List<BusRunDetector> elegibleCouples){
+//		return null;
+//	}
+//	
 	
 	private void aggregateStep(int i, List<PartialTravel> partials) {
 		PartialTravel prev = null, next=null, toAggregate=null;
-		
+		System.out.println("AGGREGATION");
+
 		toAggregate = partials.get(i);
 		if(i>0)
 			prev = partials.get(i-1);
@@ -488,26 +537,61 @@ public class AppServiceImpl implements AppService{
 			next = partials.get(i+1);
 		
 		if(prev!=null && next!=null && prev.getMode()==next.getMode()){
-			PartialTravel newPartial = new PartialTravel();
-			newPartial.setMode(prev.getMode());
-			newPartial.setStart(prev.getStart());
-			newPartial.setEnd(next.getEnd());
-			newPartial.setBeaconId(prev.getBeaconId());
-			List<InfoPosition> positions = new ArrayList<InfoPosition>();
-			positions.addAll(prev.getAllPositions());
-			positions.addAll(toAggregate.getAllPositions());
-			positions.addAll(next.getAllPositions());
-			newPartial.setAllPositions(positions);
-			lengthOfPartial(newPartial);
-			partials.add(i-1, newPartial);
-			partials.remove(prev);
-			partials.remove(toAggregate);
-			partials.remove(next);
+				PartialTravel newPartial = new PartialTravel();
+				newPartial.setMode(prev.getMode());
+				newPartial.setStart(prev.getStart());
+				newPartial.setEnd(next.getEnd());
+				newPartial.setBeaconId(prev.getBeaconId());
+				List<InfoPosition> positions = new ArrayList<InfoPosition>();
+				positions.addAll(prev.getAllPositions());
+				positions.addAll(toAggregate.getAllPositions());
+				positions.addAll(next.getAllPositions());
+				newPartial.setAllPositions(positions);
+				lengthOfPartial(newPartial);
+				partials.add(i-1, newPartial);
+				partials.remove(prev);
+				partials.remove(toAggregate);
+				partials.remove(next);
 		}else{
 			if(prev!=null && next!=null){
 				long prevTimeDistance = toAggregate.getStart().getTime()-prev.getEnd().getTime();
 				long nextTimeDistance = next.getStart().getTime()-toAggregate.getEnd().getTime();
 				if(prevTimeDistance<nextTimeDistance){
+					if(prev.getBeaconId()==null || prev.getBeaconId().isEmpty()){
+						PartialTravel newPartial = new PartialTravel();
+						newPartial.setMode(prev.getMode());
+						newPartial.setStart(prev.getStart());
+						newPartial.setEnd(toAggregate.getEnd());
+						newPartial.setBeaconId(prev.getBeaconId());
+						List<InfoPosition> positions = new ArrayList<InfoPosition>();
+						positions.addAll(prev.getAllPositions());
+						positions.addAll(toAggregate.getAllPositions());
+						newPartial.setAllPositions(positions);
+						
+						lengthOfPartial(newPartial);
+						partials.add(i-1, newPartial);
+						partials.remove(prev);
+						partials.remove(toAggregate);
+					}
+				}else{
+					if(next.getBeaconId()==null || next.getBeaconId().isEmpty()){
+						PartialTravel newPartial = new PartialTravel();
+						newPartial.setMode(next.getMode());
+						newPartial.setStart(toAggregate.getStart());
+						newPartial.setEnd(next.getEnd());
+						newPartial.setBeaconId(next.getBeaconId());
+						List<InfoPosition> positions = new ArrayList<InfoPosition>();
+						positions.addAll(toAggregate.getAllPositions());
+						positions.addAll(next.getAllPositions());
+						newPartial.setAllPositions(positions);
+						lengthOfPartial(newPartial);
+						partials.add(i, newPartial);
+						partials.remove(toAggregate);
+						partials.remove(next);
+					}
+				}
+			}else if(prev!=null){
+				if(prev.getBeaconId()==null || prev.getBeaconId().isEmpty()){
 					PartialTravel newPartial = new PartialTravel();
 					newPartial.setMode(prev.getMode());
 					newPartial.setStart(prev.getStart());
@@ -522,7 +606,9 @@ public class AppServiceImpl implements AppService{
 					partials.add(i-1, newPartial);
 					partials.remove(prev);
 					partials.remove(toAggregate);
-				}else{
+				}
+			}else if(next!=null){
+				if(next.getBeaconId()==null || next.getBeaconId().isEmpty()){
 					PartialTravel newPartial = new PartialTravel();
 					newPartial.setMode(next.getMode());
 					newPartial.setStart(toAggregate.getStart());
@@ -532,41 +618,12 @@ public class AppServiceImpl implements AppService{
 					positions.addAll(toAggregate.getAllPositions());
 					positions.addAll(next.getAllPositions());
 					newPartial.setAllPositions(positions);
+				
 					lengthOfPartial(newPartial);
 					partials.add(i, newPartial);
 					partials.remove(toAggregate);
 					partials.remove(next);
 				}
-			}else if(prev!=null){
-				PartialTravel newPartial = new PartialTravel();
-				newPartial.setMode(prev.getMode());
-				newPartial.setStart(prev.getStart());
-				newPartial.setEnd(toAggregate.getEnd());
-				newPartial.setBeaconId(prev.getBeaconId());
-				List<InfoPosition> positions = new ArrayList<InfoPosition>();
-				positions.addAll(prev.getAllPositions());
-				positions.addAll(toAggregate.getAllPositions());
-				newPartial.setAllPositions(positions);
-				
-				lengthOfPartial(newPartial);
-				partials.add(i-1, newPartial);
-				partials.remove(prev);
-				partials.remove(toAggregate);
-			}else if(next!=null){
-				PartialTravel newPartial = new PartialTravel();
-				newPartial.setMode(next.getMode());
-				newPartial.setStart(toAggregate.getStart());
-				newPartial.setEnd(next.getEnd());
-				newPartial.setBeaconId(next.getBeaconId());
-				List<InfoPosition> positions = new ArrayList<InfoPosition>();
-				positions.addAll(toAggregate.getAllPositions());
-				positions.addAll(next.getAllPositions());
-				newPartial.setAllPositions(positions);
-			
-				lengthOfPartial(newPartial);
-				partials.add(i, newPartial);
-				partials.remove(toAggregate);
-				partials.remove(next);
 			}else{
 				partials.remove(i);
 			}
@@ -741,8 +798,13 @@ public class AppServiceImpl implements AppService{
 
 	@Override
 	public DailyData getDailyData(String passengerId) {
-		DailyData dd = travelRepo.getDailyData(passengerId);
-		return null;
+		DailyData dd = new DailyData();
+		List<DailyInfo> tomi = runRepo.getDailyInfoTomi();
+		List<DailyInfo> mito = runRepo.getDailyInfoMito();
+
+		dd.setMito(mito);
+		dd.setTomi(tomi);
+		return dd;
 	}
 
 	

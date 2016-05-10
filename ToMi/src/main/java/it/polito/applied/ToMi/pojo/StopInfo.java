@@ -1,14 +1,23 @@
 package it.polito.applied.ToMi.pojo;
 
-import java.util.Date;
-
 public class StopInfo {
 
 	private String busStopId;
 	private String busStopName;
-	private Date date;
+	private long time;
 	private int numPassengerGetIn;
 	private int numPassengerGetOut;
+	
+	public StopInfo(){
+		
+	}
+	
+	public StopInfo(BusStop s){
+		this();
+		busStopId = s.getIdStop();
+		busStopName = s.getName();
+		time = s.getTime();
+	}
 	
 	public String getBusStopId() {
 		return busStopId;
@@ -22,12 +31,6 @@ public class StopInfo {
 	public void setBusStopName(String busStopName) {
 		this.busStopName = busStopName;
 	}
-	public Date getDate() {
-		return date;
-	}
-	public void setDate(Date date) {
-		this.date = date;
-	}
 	public int getNumPassengerGetIn() {
 		return numPassengerGetIn;
 	}
@@ -39,6 +42,12 @@ public class StopInfo {
 	}
 	public void setNumPassengerGetOut(int numPassengerGetOut) {
 		this.numPassengerGetOut = numPassengerGetOut;
+	}
+	public long getTime() {
+		return time;
+	}
+	public void setTime(long time) {
+		this.time = time;
 	}
 	
 	

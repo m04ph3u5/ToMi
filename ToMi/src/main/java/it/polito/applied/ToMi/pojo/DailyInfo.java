@@ -1,10 +1,8 @@
 package it.polito.applied.ToMi.pojo;
 
-import java.util.Date;
-
 public class DailyInfo {
 	
-	private Date time;
+	private String day;
 	private int passengers;
 	private int runs;
 	private boolean myRoute;
@@ -13,20 +11,14 @@ public class DailyInfo {
 		
 	}
 	
-	public DailyInfo(Date time, int passengers, int runs, boolean myRoute){
+	public DailyInfo(String day, int passengers, int runs, boolean myRoute){
 		super();
-		this.time = time;
+		this.day = day;
 		this.passengers = passengers;
 		this.runs = runs;
 		this.myRoute = myRoute;
 	}
 	
-	public Date getTime() {
-		return time;
-	}
-	public void setTime(Date time) {
-		this.time = time;
-	}
 	public int getPassengers() {
 		return passengers;
 	}
@@ -44,6 +36,12 @@ public class DailyInfo {
 	}
 	public void setMyRoute(boolean myRoute) {
 		this.myRoute = myRoute;
+	}
+	public String getDay() {
+		return day;
+	}
+	public void setDay(String day) {
+		this.day = day;
 	}
 	
 	
