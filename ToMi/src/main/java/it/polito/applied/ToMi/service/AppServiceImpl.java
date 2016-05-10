@@ -327,7 +327,9 @@ public class AppServiceImpl implements AppService{
 		List<BusStop> stops = new ArrayList<BusStop>();
 		Bus bus = busRepo.findByBeaconId(p.getBeaconId());
 		String idLine = bus.getIdLine();
-		p.setIdRun(stops.get(0).getIdRun());
+		//p.setIdRun(stops.get(0).getIdRun());
+		stops = getBusStops(p, idLine);
+		
 	}
 
 //	private void saveBusTravel(PartialTravel p, String passengerId, String day) {
@@ -353,10 +355,9 @@ public class AppServiceImpl implements AppService{
 //		busTravelRepo.save(b);
 //	}
 
-	private List<BusStop> getBusStops(PartialTravel p) {
+	private List<BusStop> getBusStops(PartialTravel p, String idLine) {
 		List<BusStop> stops = new ArrayList<BusStop>();
-		Bus bus = busRepo.findByBeaconId(p.getBeaconId());
-		String idLine = bus.getIdLine();
+		
 		InfoPosition firstPosition=null, lastPosition=null;
 	
 		int i=0;
@@ -379,15 +380,22 @@ public class AppServiceImpl implements AppService{
 			else
 				break;
 		}
+		// a questo punto fistPosition contiene l'InfoPosition relativa al primo log con una posizione
+		// del partial travel (o null) e lastPosition l'InfoPosition relativa all'ultimo log con una posizione
+		// del partial travel (o null)
 		
+		
+		//first conterrà la lista dei BusStop candidati ad essere l'inizio del viaggio in bus
+		//last conterrà la lista dei BusStop candidati ad essere la fine del viaggio in bus
 		List<GeoResult<BusStop>> first=null, last=null;
 		if(firstPosition!=null && lastPosition!=null && firstPosition!=lastPosition 
 				&&(firstPosition.getPosition().getLat()!=lastPosition.getPosition().getLat()
 				|| firstPosition.getPosition().getLng()!=lastPosition.getPosition().getLng())){
 			
-			first = busStopRepo.findNear(p.getAllPositions().get(0), idLine).getContent();
-			last = busStopRepo.findNear(p.getAllPositions().get(p.getAllPositions().size()-1), idLine).getContent();
+			first = busStopRepo.findNear(firstPosition, idLine).getContent();
+			last = busStopRepo.findNear(lastPosition, idLine).getContent();
 			
+			//con questo metodo vado a scegliere il più probabile inizio e la più probabile fine del viaggio in bus
 			List<BusStop> firstAndLast = getFirstLastStop(first, last, firstPosition, lastPosition);
 			
 			if(firstAndLast.size()==2){
