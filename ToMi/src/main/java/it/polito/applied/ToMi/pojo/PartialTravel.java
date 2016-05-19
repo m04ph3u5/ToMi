@@ -14,6 +14,8 @@ public class PartialTravel {
 	private double lengthTravel;
 	private double lengthAccuracy;
 	private String idRun;
+	//TRUE TOMI, FALSE MITO. E' ridondante come info ma serve per reperire più velocemente la direzione
+	private boolean direction;
 	
 	public PartialTravel(){
 		super();
@@ -25,23 +27,18 @@ public class PartialTravel {
 		this();
 		this.mode = mode;
 		this.beaconId = beaconId;
-		
 		this.start = start;
 		this.end = end;
 		this.allPositions = allPositions;
 	}
 
-	
-	
 	public String getIdRun() {
 		return idRun;
 	}
 
-
 	public void setIdRun(String idRun) {
 		this.idRun = idRun;
 	}
-
 
 	public List<InfoPosition> getAllPositions() {
 		return allPositions;
@@ -55,16 +52,13 @@ public class PartialTravel {
 		return start;
 	}
 
-
 	public void setStart(Date start) {
 		this.start = start;
 	}
 
-
 	public Date getEnd() {
 		return end;
 	}
-
 
 	public void setEnd(Date end) {
 		this.end = end;
@@ -100,6 +94,14 @@ public class PartialTravel {
 	
 	public void addInfoPosition(InfoPosition i){
 		allPositions.add(i);
+	}
+
+	public boolean isDirection() {
+		return direction;
+	}
+
+	public void setDirection(boolean direction) {
+		this.direction = direction;
 	}
 	
 }

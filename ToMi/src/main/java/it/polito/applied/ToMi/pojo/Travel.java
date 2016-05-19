@@ -19,7 +19,7 @@ public class Travel {
 	private Date start;
 	private Date end;
 	private List<PartialTravel> partials;
-	private String day;
+	private long dayTimestamp;
 	
 	
 	public Date getEnd() {
@@ -73,13 +73,11 @@ public class Travel {
 	public void setPartials(List<PartialTravel> partials) {
 		this.partials = partials;
 	}
-
-	public String getDay() {
-		return day;
+	public long getDayTimestamp() {
+		return dayTimestamp;
 	}
-
-	public void setDay(String day) {
-		this.day = day;
+	public void setDayTimestamp(long dayTimestamp) {
+		this.dayTimestamp = dayTimestamp;
 	}
 	
 }

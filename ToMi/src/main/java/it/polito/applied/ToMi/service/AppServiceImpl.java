@@ -2,6 +2,8 @@ package it.polito.applied.ToMi.service;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,6 +23,7 @@ import it.polito.applied.ToMi.pojo.BusStop;
 import it.polito.applied.ToMi.pojo.Comment;
 import it.polito.applied.ToMi.pojo.DailyData;
 import it.polito.applied.ToMi.pojo.DailyInfo;
+import it.polito.applied.ToMi.pojo.DayPassengerBusRun;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.InfoPosition;
 import it.polito.applied.ToMi.pojo.PartialTravel;
@@ -95,7 +98,7 @@ public class AppServiceImpl implements AppService{
 	
 	@PostConstruct
 	public void initialize(){
-		date = new SimpleDateFormat("dd/MM/yyyy");
+		date = new SimpleDateFormat("yyyy-MM-dd");
 		time = new SimpleDateFormat("hh:mm");
 	}
 
@@ -308,13 +311,19 @@ public class AppServiceImpl implements AppService{
 			travel.setEnd(partials.get(partials.size()-1).getEnd());
 			travel.setOnBus(atLeastOneBusTravel);
 			travel.setPartials(partials);
-			travel.setDay(date.format(travel.getStart()));
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(travel.getStart());
+			cal.set(Calendar.HOUR_OF_DAY, 12);
+			cal.set(Calendar.MINUTE,0);
+			cal.set(Calendar.SECOND,0);
+			cal.set(Calendar.MILLISECOND, 0);
+			travel.setDayTimestamp(cal.getTime().getTime());
 			lengthOfTravel(travel, tempTravel.getMissingPoint());
 			
 			if(travel.isOnBus()){
 				for(PartialTravel p: travel.getPartials()){
 					if(p.getBeaconId()!=null && !p.getBeaconId().isEmpty()){
-						saveRun(p, travel.getPassengerId(), travel.getDay());
+						saveRun(p, travel.getPassengerId(), travel.getDayTimestamp(), date.format(travel.getStart()));
 						
 					}
 				}
@@ -329,7 +338,7 @@ public class AppServiceImpl implements AppService{
 	/*questo metodo cerca se c'è già una corsa con quell'idRun, idLine, day salvata. Se c'è incrementa il numero di persone su quella corsa di 1 e
 	/aggiorna i valori di salite/discese delle specifiche fermate sui cui il passeggero è salito/sceso. */
 	
-	private void saveRun(PartialTravel p, String passengerId, String day){
+	private void saveRun(PartialTravel p, String passengerId, long timestamp, String day){
 		System.out.println(p.getAllPositions().size());
 		List<BusStop> stops = new ArrayList<BusStop>();
 		Bus bus = busRepo.findByBeaconId(p.getBeaconId());
@@ -342,13 +351,16 @@ public class AppServiceImpl implements AppService{
 			if(run==null){
 				run = new Run();
 				run.setDay(day);
+				run.setTimestamp(timestamp);
 				run.setIdRun(p.getIdRun());
 				run.setIdLine(idLine);
 				if(stops.get(0).getIdProg()>=0){
 					run.setDirection(false);
+					p.setDirection(false);
 				}
 				else{
 					run.setDirection(true);
+					p.setDirection(true);
 				}
 				List<BusStop> allRunStops = busStopRepo.findByIdRun(run.getIdRun(), new Sort(Direction.ASC,"idProg"));
 				for(BusStop s : allRunStops){
@@ -802,11 +814,48 @@ public class AppServiceImpl implements AppService{
 		List<DailyInfo> tomi = runRepo.getDailyInfoTomi();
 		List<DailyInfo> mito = runRepo.getDailyInfoMito();
 
+		List<DayPassengerBusRun> lTomi = travelRepo.countToMiDailyBusTravel(passengerId);
+		List<DayPassengerBusRun> lMito = travelRepo.countMiToDailyBusTravel(passengerId);
+
 		dd.setMito(mito);
+		for(DayPassengerBusRun d : lTomi){
+			if(d.getCount()>0){
+				DailyInfo di = searchDailyInfo(tomi, d.getTimestamp());
+				if(di!=null)
+					di.setMyRoute(true);
+			}
+		}
 		dd.setTomi(tomi);
+		for(DayPassengerBusRun d : lMito){
+			if(d.getCount()>0){
+				DailyInfo di = searchDailyInfo(mito, d.getTimestamp());
+				if(di!=null)
+					di.setMyRoute(true);
+			}
+		}
 		return dd;
 	}
 
+	private DailyInfo searchDailyInfo(List<DailyInfo> list, long day){
+		int max = list.size();
+		if(max==0)
+			return null;
+		if(max==1){
+			DailyInfo d = list.get(0);
+			if(d.getTimestamp()==day)
+				return d;
+			else 
+				return null;
+		}else{
+			DailyInfo d = list.get(max/2);
+			if(d.getTimestamp()-day<0){
+				return searchDailyInfo(list.subList(max/2, max), day);
+			}else if(d.getTimestamp()-day>0){
+				return searchDailyInfo(list.subList(0, max/2), day);
+			}else
+				return d;
+		}
+	}
 	
 
 }

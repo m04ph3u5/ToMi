@@ -3,6 +3,8 @@ package it.polito.applied.ToMi.repository;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
@@ -51,9 +53,10 @@ public class RunRepositoryImpl implements CustomRunRepository{
 		c = Criteria.where("direction").is(true);
 		
 		Aggregation agg = Aggregation.newAggregation(Aggregation.match(c), 
-				Aggregation.group("day").count().as("runs").sum("totPassenger").as("passengers"),
-				Aggregation.project("runs", "passengers").and("day").previousOperation());
-		AggregationResults result = mongoOp.aggregate(agg, Run.class, DailyInfo.class);
+				Aggregation.group("timestamp").count().as("runs").sum("totPassenger").as("passengers"),
+				Aggregation.project("runs", "passengers").and("timestamp").previousOperation(),
+				Aggregation.sort(new Sort(Direction.ASC, "timestamp")));
+		AggregationResults<DailyInfo> result = mongoOp.aggregate(agg, Run.class, DailyInfo.class);
 		
 		List<DailyInfo> i = result.getMappedResults();
 		return i;
@@ -65,10 +68,11 @@ public class RunRepositoryImpl implements CustomRunRepository{
 		c = Criteria.where("direction").is(false);
 		
 		Aggregation agg = Aggregation.newAggregation(Aggregation.match(c), 
-				Aggregation.group("day").count().as("runs").sum("totPassenger").as("passengers"),
-				Aggregation.project("runs", "passengers").and("day").previousOperation());
+				Aggregation.group("timestamp").count().as("runs").sum("totPassenger").as("passengers"),
+				Aggregation.project("runs", "passengers").and("timestamp").previousOperation(),
+				Aggregation.sort(new Sort(Direction.ASC, "timestamp")));
 
-		AggregationResults result = mongoOp.aggregate(agg, Run.class, DailyInfo.class);
+		AggregationResults<DailyInfo> result = mongoOp.aggregate(agg, Run.class, DailyInfo.class);
 		
 		List<DailyInfo> i = result.getMappedResults();
 		return i;

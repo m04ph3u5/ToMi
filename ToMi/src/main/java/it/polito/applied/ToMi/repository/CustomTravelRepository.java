@@ -1,8 +1,13 @@
 package it.polito.applied.ToMi.repository;
 
-import it.polito.applied.ToMi.pojo.DailyData;
+import java.util.List;
+
+import it.polito.applied.ToMi.pojo.DayPassengerBusRun;
 
 public interface CustomTravelRepository {
 	
+	List<DayPassengerBusRun> countToMiDailyBusTravel(String passengerId);
+	List<DayPassengerBusRun> countMiToDailyBusTravel(String passengerId);
+
 
 }

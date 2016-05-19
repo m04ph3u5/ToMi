@@ -2,21 +2,13 @@ package it.polito.applied.ToMi.pojo;
 
 public class DailyInfo {
 	
-	private String day;
+	private long timestamp;
 	private int passengers;
 	private int runs;
 	private boolean myRoute;
 	
 	public DailyInfo(){
 		
-	}
-	
-	public DailyInfo(String day, int passengers, int runs, boolean myRoute){
-		super();
-		this.day = day;
-		this.passengers = passengers;
-		this.runs = runs;
-		this.myRoute = myRoute;
 	}
 	
 	public int getPassengers() {
@@ -37,13 +29,11 @@ public class DailyInfo {
 	public void setMyRoute(boolean myRoute) {
 		this.myRoute = myRoute;
 	}
-	public String getDay() {
-		return day;
+	public long getTimestamp() {
+		return timestamp;
 	}
-	public void setDay(String day) {
-		this.day = day;
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
 	}
 	
-	
-
 }

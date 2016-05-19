@@ -20,6 +20,7 @@ public class Run {
 	private String idLine;
 	private String day;
 	private int totPassenger;
+	private long timestamp;
 	private List<StopInfo> stops;
 	//TRUE TOMI, FALSE MITO. E' ridondante come info ma serve per reperire più velocemente la direzione
 	private boolean direction;
@@ -70,4 +71,11 @@ public class Run {
 	public String getId() {
 		return id;
 	}
+	public long getTimestamp() {
+		return timestamp;
+	}
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
+	}
+	
 }
