@@ -26,7 +26,9 @@ import it.polito.applied.ToMi.pojo.Comment;
 import it.polito.applied.ToMi.pojo.DailyData;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.Passenger;
+import it.polito.applied.ToMi.pojo.RunDTO;
 import it.polito.applied.ToMi.repository.PassengerRepository;
+import it.polito.applied.ToMi.sademData.Siri;
 import it.polito.applied.ToMi.service.AppService;
 
 
@@ -161,5 +163,23 @@ public class AppController extends BaseController{
 		
 		return appService.getDailyData(p.getId());
 		
+	}
+	
+	@PreAuthorize("hasRole('ROLE_APP')")
+	@RequestMapping(value="/v1/runs", method=RequestMethod.GET)
+	@ResponseStatus(value = HttpStatus.OK)
+	public List<RunDTO> getRuns(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
+		Passenger p = passRepo.findByEmail(userEmail);
+		if(p==null)
+			throw new NotFoundException("User not found");
+		
+		return appService.getRuns();
+		
+	}
+	
+	@RequestMapping(value="/v1/siri", method=RequestMethod.POST)
+	@ResponseStatus(value = HttpStatus.CREATED)
+	public void postSiri(@RequestBody Siri siri) throws NotFoundException {
+		System.out.println(siri);
 	}
 }

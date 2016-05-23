@@ -29,6 +29,7 @@ import it.polito.applied.ToMi.pojo.InfoPosition;
 import it.polito.applied.ToMi.pojo.PartialTravel;
 import it.polito.applied.ToMi.pojo.Passenger;
 import it.polito.applied.ToMi.pojo.Run;
+import it.polito.applied.ToMi.pojo.RunDTO;
 import it.polito.applied.ToMi.pojo.StopInfo;
 import it.polito.applied.ToMi.pojo.TemporaryTravel;
 import it.polito.applied.ToMi.pojo.Travel;
@@ -855,6 +856,16 @@ public class AppServiceImpl implements AppService{
 			}else
 				return d;
 		}
+	}
+
+	@Override
+	public List<RunDTO> getRuns() {
+		List<String> idRuns = busStopRepo.findDistinctRuns();
+		
+		List<RunDTO> runs = new ArrayList<RunDTO>();
+		for(String s : idRuns)
+			runs.add(new RunDTO(s));
+		return runs;
 	}
 	
 

@@ -9,6 +9,7 @@ import it.polito.applied.ToMi.pojo.Comment;
 import it.polito.applied.ToMi.pojo.DailyData;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.Passenger;
+import it.polito.applied.ToMi.pojo.RunDTO;
 
 public interface AppService {
 
@@ -27,4 +28,6 @@ public interface AppService {
 	public DailyData getDailyData(String passengerId);
 	
 	public void saveAnswerToComments(String id, List<Comment> answers, String userEmail) throws BadRequestException ;
+
+	public List<RunDTO> getRuns();
 }

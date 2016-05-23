@@ -1,6 +1,7 @@
 package it.polito.applied.ToMi.repository;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -9,9 +10,12 @@ import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.NearQuery;
 import org.springframework.data.mongodb.core.query.Query;
+
+import com.mongodb.DBCollection;
 
 import it.polito.applied.ToMi.pojo.BusStop;
 import it.polito.applied.ToMi.pojo.InfoPosition;
@@ -53,6 +57,12 @@ public class BusStopRepositoryImpl implements CustomBusStopRepository{
 		q.with(new Sort(Direction.ASC,"idProg"));
 		
 		return mongoOp.find(q, BusStop.class);
+	}
+
+	@Override
+	public List<String> findDistinctRuns() {
+		
+		return null;
 	}
 
 }

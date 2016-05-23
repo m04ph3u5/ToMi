@@ -19,6 +19,26 @@
 		</mvc:argument-resolvers>
 	</mvc:annotation-driven>
 	
+<!-- 	 <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"> -->
+<!--         <property name="messageConverters"> -->
+<!--           <list>  -->
+<!--             <ref bean="marshallingHttpMessageConverter"/> -->
+<!--           </list> -->
+<!--         </property> -->
+<!--     </bean> -->
+<!--     <bean id="marshallingHttpMessageConverter"  -->
+<!--           class="org.springframework.http.converter.xml.MarshallingHttpMessageConverter"> -->
+<!--            <constructor-arg ref="jaxb2Marshaller" /> -->
+<!--     </bean>  -->
+<!--     <bean id="jaxb2Marshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller"> -->
+<!--         <property name="classesToBeBound"> -->
+<!--             <list> -->
+<!--                 <value>it.polito.applied.ToMi.sademData.Siri</value> -->
+<!--                 <value>it.polito.applied.ToMi.sademData.ServiceDelivery</value> -->
+<!--             </list> -->
+<!--         </property> -->
+<!--     </bean> -->
+	
 
 	<security:global-method-security
 		pre-post-annotations="enabled">
