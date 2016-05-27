@@ -22,6 +22,26 @@ public class EstimatedTimeTableDelivery implements Serializable {
 	
 	@XmlElement(name="EstimatedJourneyVersionFrame")
 	private EstimatedJourneyVersionFrame estimatedJourneyVersionFrame;
-	
 
+	public Date getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(Date timestamp) {
+		this.timestamp = timestamp;
+	}
+
+	public EstimatedJourneyVersionFrame getEstimatedJourneyVersionFrame() {
+		return estimatedJourneyVersionFrame;
+	}
+
+	public void setEstimatedJourneyVersionFrame(EstimatedJourneyVersionFrame estimatedJourneyVersionFrame) {
+		this.estimatedJourneyVersionFrame = estimatedJourneyVersionFrame;
+	}
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+	
+	
 }

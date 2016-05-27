@@ -33,7 +33,23 @@ public class Siri implements Serializable{
 	
 	@Override
 	public String toString(){
-		return serviceDelivery.getProducerRef()+" "+serviceDelivery.getTimestamp();
+		String s = serviceDelivery.getProducerRef()+" "+serviceDelivery.getTimestamp();
+				
+		EstimatedTimeTableDelivery ettd = serviceDelivery.getEstimatedTimeTableDelivery();
+		if(ettd==null)
+			System.out.print("EstimatedTimeTableDelivery null");
+		
+		EstimatedJourneyVersionFrame ejvf = ettd.getEstimatedJourneyVersionFrame();
+		if(ejvf==null)
+			System.out.print("EstimatedJourneyVersionFrame null");
+		
+		EstimatedVehicleJourney evj = ejvf.getEstimatedVehicleJourney();
+		if(evj==null)
+			System.out.print("EstimatedVehicleJourney null");
+		else
+			s+=evj.toString();
+
+		return s;
 	}
 
 }

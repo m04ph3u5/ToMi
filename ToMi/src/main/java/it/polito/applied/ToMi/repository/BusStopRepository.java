@@ -11,8 +11,6 @@ public interface BusStopRepository extends MongoRepository<BusStop, String>, Cus
 
 	public List<BusStop> findByIdRun(String idRun, Sort sort);
 
-
-
 }
 
 

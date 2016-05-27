@@ -25,6 +25,12 @@ public class RunDetail {
 	public void addStop(Stop s){
 		stops.add(s);
 	}
+	public Stop getStop(int i){
+		if(stops.size()>i)
+			return stops.get(i);
+		else
+			return null;
+	}
 	
 	public String getIdRun() {
 		return idRun;

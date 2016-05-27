@@ -3,6 +3,7 @@ package it.polito.applied.ToMi.service;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,9 +28,12 @@ import it.polito.applied.ToMi.pojo.DayPassengerBusRun;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.InfoPosition;
 import it.polito.applied.ToMi.pojo.PartialTravel;
+import it.polito.applied.ToMi.pojo.PartialTravelComparatorOnRunId;
 import it.polito.applied.ToMi.pojo.Passenger;
 import it.polito.applied.ToMi.pojo.Run;
 import it.polito.applied.ToMi.pojo.RunDTO;
+import it.polito.applied.ToMi.pojo.RunDetail;
+import it.polito.applied.ToMi.pojo.Stop;
 import it.polito.applied.ToMi.pojo.StopInfo;
 import it.polito.applied.ToMi.pojo.TemporaryTravel;
 import it.polito.applied.ToMi.pojo.Travel;
@@ -347,6 +351,9 @@ public class AppServiceImpl implements AppService{
 		stops = getBusStops(p, idLine);
 		if(stops!=null){
 			p.setIdRun(stops.get(0).getIdRun());
+			
+			for(BusStop stop : stops)
+				p.addBusStopId(stop.getIdStop());
 			
 			Run run = runRepo.findByIdRunAndIdLineAndDay(p.getIdRun(), idLine, day);
 			if(run==null){
@@ -860,13 +867,156 @@ public class AppServiceImpl implements AppService{
 
 	@Override
 	public List<RunDTO> getRuns() {
-		List<String> idRuns = busStopRepo.findDistinctRuns();
+		List<BusStop> stops = busStopRepo.findAllSortByIdLineAndIdRunAndIdProg();
+		if(stops!=null){
+			List<RunDTO> runs = new ArrayList<RunDTO>();
+			int n = stops.size();
+			int i=0;
+			BusStop prev = null;
+			BusStop actual = null;
+			RunDTO run = null;
+			while(i<n){
+				actual = stops.get(i);
+				if(prev==null){
+					run = new RunDTO();
+					run.setIdRun(actual.getIdRun());
+					run.setOrigin(actual.getName());
+					run.sethOrigin(formatHour(actual.getTime()));
+				}else{
+					if(!actual.getIdRun().equals(prev.getIdRun())){
+						run.setDestination(prev.getName());
+						run.sethDestionation(formatHour(prev.getTime()));
+						runs.add(run);
+						
+						run = new RunDTO();
+						run.setIdRun(actual.getIdRun());
+						run.setOrigin(actual.getName());
+						run.sethOrigin(formatHour(actual.getTime()));
+					}
+				}
+				prev = actual;
+				i++;
+			}
+			if(actual!=null){
+				run.setDestination(actual.getName());
+				run.sethDestionation(formatHour(actual.getTime()));
+				runs.add(run);
+			}
+			
+			return runs;
+		}else
+			return Collections.emptyList();
+	}
+
+	private String formatHour(long time) {
+		long minutes = time/1000/60;
+		long hour = minutes/60;
+		long minute = minutes%60;
+		if(hour<10 && minute<10)
+			return "0"+hour+":0"+minute;
+		else if(hour<10 && minute>=10)
+			return "0"+hour+":"+minute;
+		else if(hour>=10 && minute <10)
+			return hour+":0"+minute;
+		else
+			return ""+hour+":"+minute;
+	}
+
+	@Override
+	public List<RunDetail> getRunDetails(long timestamp, String passengerId) {
+		Date d = new Date(timestamp);
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(d);
+		cal.set(Calendar.HOUR_OF_DAY, 12);
+		cal.set(Calendar.MINUTE,0);
+		cal.set(Calendar.SECOND,0);
+		cal.set(Calendar.MILLISECOND, 0);
+		List<Run> runs = runRepo.findByTimestamp(cal.getTime().getTime());
 		
-		List<RunDTO> runs = new ArrayList<RunDTO>();
-		for(String s : idRuns)
-			runs.add(new RunDTO(s));
-		return runs;
+		if(runs!=null){
+			Date start, end;
+			cal.set(Calendar.HOUR_OF_DAY, 0);
+			start = cal.getTime();
+			cal.set(Calendar.HOUR_OF_DAY, 23);
+			cal.set(Calendar.MINUTE,59);
+			cal.set(Calendar.SECOND,59);
+			cal.set(Calendar.MILLISECOND, 999);
+			end = cal.getTime();
+			
+			List<Travel> myBusTravel = travelRepo.findMyBusTravelInDay(start, end, passengerId);
+			List<PartialTravel> onBusPartials = getOnBusPartials(myBusTravel);
+			List<RunDetail> details = new ArrayList<RunDetail>();
+			
+			for(Run r : runs){
+				RunDetail rd = new RunDetail();
+				rd.setIdRun(r.getIdRun());
+				rd.setPassengers(r.getTotPassenger());
+				PartialTravel pt = searchPartialTravel(onBusPartials, r.getIdRun());
+				List<String> myBusStops;
+				if(pt!=null)
+					myBusStops = pt.getBusStopsId();
+				else
+					myBusStops = Collections.emptyList();
+				
+				List<StopInfo> stopsInfo = r.getStops();
+				for(int i=0; i<stopsInfo.size(); i++){
+					StopInfo s = stopsInfo.get(i);
+					Stop stop = new Stop();
+					stop.setId(s.getBusStopId());
+					if(i==0)
+						stop.setPassengers(s.getNumPassengerGetIn());
+					else
+						stop.setPassengers(rd.getStop(i-1).getPassengers()+s.getNumPassengerGetIn()-s.getNumPassengerGetOut());
+					
+					if(myBusStops.contains(s.getBusStopId())){
+						stop.setMyRoute(true);
+					}
+					rd.addStop(stop);
+					rd.setTimestamp(new Date(r.getTimestamp()));
+				}
+				details.add(rd);
+			}
+			return details;
+		}else
+			return Collections.emptyList();
+	}
+
+	private List<PartialTravel> getOnBusPartials(List<Travel> myBusTravel) {
+		if(myBusTravel==null || myBusTravel.size()==0)
+			return Collections.emptyList();
+		else{
+			List<PartialTravel> partials = new ArrayList<PartialTravel>();
+			for(Travel t : myBusTravel){
+				for(PartialTravel p : t.getPartials()){
+					if(p.getIdRun()!=null && !p.getIdRun().isEmpty())
+						partials.add(p);
+				}
+			}
+			if(partials.size()>1)
+				Collections.sort(partials, new PartialTravelComparatorOnRunId());
+			return partials;
+		}
 	}
 	
+	private PartialTravel searchPartialTravel(List<PartialTravel> list, String idRun){
+		int max = list.size();
+		if(max==0)
+			return null;
+		if(max==1){
+			PartialTravel p = list.get(0);
+			if(p.getIdRun().equals(idRun))
+				return p;
+			else 
+				return null;
+		}else{
+			PartialTravel p = list.get(max/2);
+			if(p.getIdRun().compareTo(idRun)<0){
+				return searchPartialTravel(list.subList(max/2, max), idRun);
+			}else if(p.getIdRun().compareTo(idRun)>0){
+				return searchPartialTravel(list.subList(0, max/2), idRun);
+			}else
+				return p;
+		}
+	}
 
 }

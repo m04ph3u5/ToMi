@@ -23,7 +23,7 @@ public class ServiceDelivery implements Serializable{
 	@XmlElement(name="ProducerRef")
 	private String producerRef;
 	
-	@XmlElement(name="EstimatedTimeTableDelivery")
+	@XmlElement(name="EstimatedTimetableDelivery")
 	private EstimatedTimeTableDelivery estimatedTimeTableDelivery;
 
 	public Date getTimestamp() {
@@ -54,6 +54,4 @@ public class ServiceDelivery implements Serializable{
 		this.estimatedTimeTableDelivery = estimatedTimeTableDelivery;
 	}
 	
-	
-
 }

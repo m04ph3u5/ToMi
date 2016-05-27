@@ -11,6 +11,7 @@ public class PartialTravel {
 	private Date start;
 	private Date end;
 	private List<InfoPosition> allPositions;
+	private List<String> busStopsId;
 	private double lengthTravel;
 	private double lengthAccuracy;
 	private String idRun;
@@ -20,6 +21,7 @@ public class PartialTravel {
 	public PartialTravel(){
 		super();
 		allPositions = new ArrayList<InfoPosition>();
+		busStopsId = new ArrayList<String>();
 	}
 	
 
@@ -102,6 +104,18 @@ public class PartialTravel {
 
 	public void setDirection(boolean direction) {
 		this.direction = direction;
+	}
+
+	public List<String> getBusStopsId() {
+		return busStopsId;
+	}
+
+	public void setBusStopsId(List<String> busStopsId) {
+		this.busStopsId = busStopsId;
+	}
+	
+	public void addBusStopId(String busStopId){
+		busStopsId.add(busStopId);
 	}
 	
 }

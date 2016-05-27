@@ -20,6 +20,7 @@ public class EstimatedJourneyVersionFrame implements Serializable {
 	@XmlElement(name="ResponseTimestamp")
 	private Date timestamp;
 
+	@XmlElement(name="EstimatedVehicleJourney")
 	private EstimatedVehicleJourney estimatedVehicleJourney;
 
 	public Date getTimestamp() {

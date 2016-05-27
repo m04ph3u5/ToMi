@@ -4,10 +4,15 @@ import java.util.Calendar;
 import java.util.Date;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
+@CompoundIndexes({
+	@CompoundIndex(name="run_index", unique=true, def ="{'idLine' : 1, 'idRun':1, 'idProg':1}")
+})
 public class BusStop {
 	@Id
 	private String id;

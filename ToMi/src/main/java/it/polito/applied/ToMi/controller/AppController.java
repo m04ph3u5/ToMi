@@ -27,6 +27,7 @@ import it.polito.applied.ToMi.pojo.DailyData;
 import it.polito.applied.ToMi.pojo.DetectedPosition;
 import it.polito.applied.ToMi.pojo.Passenger;
 import it.polito.applied.ToMi.pojo.RunDTO;
+import it.polito.applied.ToMi.pojo.RunDetail;
 import it.polito.applied.ToMi.repository.PassengerRepository;
 import it.polito.applied.ToMi.sademData.Siri;
 import it.polito.applied.ToMi.service.AppService;
@@ -174,6 +175,21 @@ public class AppController extends BaseController{
 			throw new NotFoundException("User not found");
 		
 		return appService.getRuns();
+		
+	}
+	
+	@PreAuthorize("hasRole('ROLE_APP')")
+	@RequestMapping(value="/v1/runDetails", method=RequestMethod.GET)
+	@ResponseStatus(value = HttpStatus.OK)
+	public List<RunDetail> getRunDetails(@RequestParam(required=true, value="date") long timestamp, @RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException, BadRequestException {
+		Passenger p = passRepo.findByEmail(userEmail);
+		if(p==null)
+			throw new NotFoundException("User not found");
+		
+		if(timestamp==0)
+			throw new BadRequestException("Give valide date");
+		
+		return appService.getRunDetails(timestamp, p.getId());
 		
 	}
 	
