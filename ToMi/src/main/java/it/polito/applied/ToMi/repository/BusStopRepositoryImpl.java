@@ -58,9 +58,9 @@ public class BusStopRepositoryImpl implements CustomBusStopRepository{
 	}
 
 	@Override
-	public List<BusStop> findAllSortByIdLineAndIdRunAndIdProg() {
+	public List<BusStop> findAllSortByIdRunAndIdLineAndIdProg() {
 		Query q = new Query();
-		q.with(new Sort(Direction.ASC, Arrays.asList("idLine","idRun","idProg")));
+		q.with(new Sort(Direction.ASC, Arrays.asList("idRun","idLine","idProg")));
 		
 		return mongoOp.find(q, BusStop.class);
 	}

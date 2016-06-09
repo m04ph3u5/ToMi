@@ -193,9 +193,9 @@ public class AppController extends BaseController{
 		
 	}
 	
-	@RequestMapping(value="/v1/siri", method=RequestMethod.POST)
-	@ResponseStatus(value = HttpStatus.CREATED)
-	public void postSiri(@RequestBody Siri siri) throws NotFoundException {
-		System.out.println(siri);
-	}
+//	@RequestMapping(value="/v1/siri", method=RequestMethod.POST)
+//	@ResponseStatus(value = HttpStatus.CREATED)
+//	public void postSiri(@RequestBody Siri siri) throws NotFoundException {
+//		System.out.println(siri);
+//	}
 }

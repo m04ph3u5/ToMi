@@ -182,7 +182,6 @@ public class AppServiceImpl implements AppService{
 	
 	@Override
 	public void saveAnswerToComments(String id, List<Comment> answers, String userEmail) throws BadRequestException {
-		// TODO Auto-generated method stub
 		Comment father = commentRepo.findById(id);
 		if(father==null)
 			throw new BadRequestException("Commento non trovato!");
@@ -867,7 +866,7 @@ public class AppServiceImpl implements AppService{
 
 	@Override
 	public List<RunDTO> getRuns() {
-		List<BusStop> stops = busStopRepo.findAllSortByIdLineAndIdRunAndIdProg();
+		List<BusStop> stops = busStopRepo.findAllSortByIdRunAndIdLineAndIdProg();
 		if(stops!=null){
 			List<RunDTO> runs = new ArrayList<RunDTO>();
 			int n = stops.size();
@@ -902,7 +901,6 @@ public class AppServiceImpl implements AppService{
 				run.sethDestionation(formatHour(actual.getTime()));
 				runs.add(run);
 			}
-			
 			return runs;
 		}else
 			return Collections.emptyList();
