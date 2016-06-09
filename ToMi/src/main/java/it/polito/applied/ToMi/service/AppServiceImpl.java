@@ -901,6 +901,7 @@ public class AppServiceImpl implements AppService{
 				run.sethDestionation(formatHour(actual.getTime()));
 				runs.add(run);
 			}
+			Collections.sort(runs);
 			return runs;
 		}else
 			return Collections.emptyList();

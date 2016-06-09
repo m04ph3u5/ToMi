@@ -1,6 +1,6 @@
 package it.polito.applied.ToMi.pojo;
 
-public class RunDTO {
+public class RunDTO implements Comparable<RunDTO>{
 
 	private String idRun;
 	private String origin;
@@ -45,7 +45,16 @@ public class RunDTO {
 	public void sethDestionation(String hDestionation) {
 		this.hDestionation = hDestionation;
 	}
-	
-	
-	
+
+	@Override
+	public int compareTo(RunDTO o) {
+		int i=Integer.parseInt(idRun);
+		int j=Integer.parseInt(o.getIdRun());
+		if(i<j)
+			return -1;
+		else if(i>j)
+			return 1;
+		else
+			return 0;
+	}
 }
