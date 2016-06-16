@@ -24,7 +24,10 @@ public class Comment {
 	private List<Comment> answers;
 	
 	public void addAnswers(List<Comment> answers){
-		this.answers.addAll(answers);
+		if(this.answers!=null)
+			this.answers.addAll(answers);
+		else
+			this.answers = answers;
 	}
 	
 	public List<Comment> getAnswers() {

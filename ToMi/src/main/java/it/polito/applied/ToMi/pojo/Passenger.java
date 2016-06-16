@@ -21,6 +21,8 @@ public class Passenger {
 	private String deviceId;
 	private Date registrationDate;
 	
+	private int runs, miutes;
+	
 	public String getId() {
 		return id;
 	}
@@ -74,6 +76,18 @@ public class Passenger {
 	}
 	public void setRegistrationDate(Date registrationDate) {
 		this.registrationDate = registrationDate;
+	}
+	public int getRuns() {
+		return runs;
+	}
+	public void setRuns(int runs) {
+		this.runs = runs;
+	}
+	public int getMiutes() {
+		return miutes;
+	}
+	public void setMiutes(int miutes) {
+		this.miutes = miutes;
 	}
 	
 	

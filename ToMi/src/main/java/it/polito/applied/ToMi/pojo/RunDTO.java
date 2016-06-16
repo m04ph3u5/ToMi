@@ -6,7 +6,7 @@ public class RunDTO implements Comparable<RunDTO>{
 	private String origin;
 	private String destination;
 	private String hOrigin;
-	private String hDestionation;
+	private String hDestination;
 	
 	public RunDTO(){}
 	
@@ -39,11 +39,11 @@ public class RunDTO implements Comparable<RunDTO>{
 	public void sethOrigin(String hOrigin) {
 		this.hOrigin = hOrigin;
 	}
-	public String gethDestionation() {
-		return hDestionation;
+	public String gethDestination() {
+		return hDestination;
 	}
-	public void sethDestionation(String hDestionation) {
-		this.hDestionation = hDestionation;
+	public void sethDestination(String hDestination) {
+		this.hDestination = hDestination;
 	}
 
 	@Override

@@ -60,11 +60,7 @@ public class AppController extends BaseController{
 	@RequestMapping(value="/v1/user", method=RequestMethod.GET)
 	@ResponseStatus(value = HttpStatus.OK)
 	public Passenger getPassenger(@RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException {
-		Passenger p = passRepo.findByEmail(userEmail);
-		if(p==null)
-			throw new NotFoundException("User not found");
-		else 
-			return p;
+		return appService.getPassenger(userEmail);
 	}
 	
 	@PreAuthorize("hasRole('ROLE_APP')")
@@ -127,7 +123,7 @@ public class AppController extends BaseController{
 		Passenger p = passRepo.findByEmail(userEmail);
 		if(p==null)
 			throw new NotFoundException("User not found");
-		
+		System.out.println("COMMENT "+comments.size());
 		appService.saveComments(comments, userEmail);
 	}
 	
@@ -138,7 +134,7 @@ public class AppController extends BaseController{
 		Passenger p = passRepo.findByEmail(userEmail);
 		if(p==null)
 			throw new NotFoundException("User not found");
-		
+		System.out.println("ANSWER "+answers.size());
 		appService.saveAnswerToComments(id, answers, userEmail);
 	}
 	
@@ -181,7 +177,7 @@ public class AppController extends BaseController{
 	@PreAuthorize("hasRole('ROLE_APP')")
 	@RequestMapping(value="/v1/runDetails", method=RequestMethod.GET)
 	@ResponseStatus(value = HttpStatus.OK)
-	public List<RunDetail> getRunDetails(@RequestParam(required=true, value="date") long timestamp, @RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException, BadRequestException {
+	public List<RunDetail> getRunDetails(@RequestParam(required=true, value="day") long timestamp, @RequestHeader(required=true, value="user") @Email String userEmail) throws NotFoundException, BadRequestException {
 		Passenger p = passRepo.findByEmail(userEmail);
 		if(p==null)
 			throw new NotFoundException("User not found");

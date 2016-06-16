@@ -7,4 +7,5 @@ import it.polito.applied.ToMi.pojo.Travel;
 public interface TravelRepository extends MongoRepository<Travel, String>, CustomTravelRepository{
 
 
+
 }

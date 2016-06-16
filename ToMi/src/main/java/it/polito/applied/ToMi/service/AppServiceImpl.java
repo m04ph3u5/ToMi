@@ -18,6 +18,7 @@ import org.springframework.data.mongodb.core.MongoDataIntegrityViolationExceptio
 import org.springframework.stereotype.Service;
 
 import it.polito.applied.ToMi.exception.BadRequestException;
+import it.polito.applied.ToMi.exception.NotFoundException;
 import it.polito.applied.ToMi.pojo.Bus;
 import it.polito.applied.ToMi.pojo.BusRunDetector;
 import it.polito.applied.ToMi.pojo.BusStop;
@@ -41,6 +42,7 @@ import it.polito.applied.ToMi.repository.BusRepository;
 import it.polito.applied.ToMi.repository.BusStopRepository;
 import it.polito.applied.ToMi.repository.CommentRepository;
 import it.polito.applied.ToMi.repository.DetectedPositionRepository;
+import it.polito.applied.ToMi.repository.PassengerRepository;
 import it.polito.applied.ToMi.repository.RunRepository;
 import it.polito.applied.ToMi.repository.TemporaryTravelRepository;
 import it.polito.applied.ToMi.repository.TravelRepository;
@@ -68,6 +70,9 @@ public class AppServiceImpl implements AppService{
 	
 	@Autowired
 	private BusRepository busRepo;
+	
+	@Autowired
+	private PassengerRepository passRepo;
 
 	public final int IN_VEHICLE=0;
 	public final int ON_BICYCLE=1;
@@ -185,6 +190,11 @@ public class AppServiceImpl implements AppService{
 		Comment father = commentRepo.findById(id);
 		if(father==null)
 			throw new BadRequestException("Commento non trovato!");
+		for(Comment c: answers){
+			c.setUserEmail(userEmail);
+			c.setDate(date.format(c.getTimestamp()));
+			c.setTime(time.format(c.getTimestamp()));
+		}
 		father.addAnswers(answers);
 		commentRepo.save(father);
 	}
@@ -884,7 +894,7 @@ public class AppServiceImpl implements AppService{
 				}else{
 					if(!actual.getIdRun().equals(prev.getIdRun())){
 						run.setDestination(prev.getName());
-						run.sethDestionation(formatHour(prev.getTime()));
+						run.sethDestination(formatHour(prev.getTime()));
 						runs.add(run);
 						
 						run = new RunDTO();
@@ -898,7 +908,7 @@ public class AppServiceImpl implements AppService{
 			}
 			if(actual!=null){
 				run.setDestination(actual.getName());
-				run.sethDestionation(formatHour(actual.getTime()));
+				run.sethDestination(formatHour(actual.getTime()));
 				runs.add(run);
 			}
 			Collections.sort(runs);
@@ -1015,6 +1025,36 @@ public class AppServiceImpl implements AppService{
 				return searchPartialTravel(list.subList(0, max/2), idRun);
 			}else
 				return p;
+		}
+	}
+
+	@Override
+	public Passenger getPassenger(String userEmail) throws NotFoundException {
+		Passenger p = passRepo.findByEmail(userEmail);
+		if(p==null)
+			throw new NotFoundException("User not found");
+		else {
+			List<Travel> busTravel = travelRepo.findMyBusTravel(p.getId());
+			if(busTravel!=null){
+				int runs = 0, minutes = 0;
+				for(Travel t : busTravel){
+					for(PartialTravel pt : t.getPartials()){
+						if(pt.getBeaconId()!=null && !pt.getBeaconId().isEmpty()){
+							runs++;
+							int startM=0, endM=0;
+							Calendar cal = Calendar.getInstance();
+							cal.setTime(pt.getStart());
+							startM=cal.get(Calendar.MINUTE)+cal.get(Calendar.HOUR)*60;
+							cal.setTime(pt.getEnd());
+							endM=cal.get(Calendar.MINUTE)+cal.get(Calendar.HOUR)*60;
+							minutes+=(endM-startM);
+						}
+					}
+				}
+				p.setRuns(runs);
+				p.setMiutes(minutes);
+			}
+			return p;
 		}
 	}
 

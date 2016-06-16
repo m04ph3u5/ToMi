@@ -24,13 +24,13 @@
 
 
 	<http use-expressions="true" entry-point-ref="restServicesEntryPoint">
- 	   	<intercept-url pattern="/" access="permitAll" requires-channel="https"/>
- 	   	<intercept-url pattern="/404" access="permitAll" requires-channel="https"/>
- 	   	<intercept-url pattern="/assets/public/*" access="permitAll" requires-channel="https"/>
+ 	   	<intercept-url pattern="/" access="permitAll" requires-channel="http"/>
+ 	   	<intercept-url pattern="/404" access="permitAll" requires-channel="http"/>
+ 	   	<intercept-url pattern="/assets/public/*" access="permitAll" requires-channel="http"/>
 
- 	   	<intercept-url pattern="/api/v1/runs" access="permitAll" requires-channel="https"/>
+<!--  	   	<intercept-url pattern="/api/v1/runs" access="permitAll" requires-channel="http"/> -->
  	   	
- 	   	<intercept-url pattern="/**" access="isAuthenticated()" requires-channel="https"/>
+ 	   	<intercept-url pattern="/**" access="isAuthenticated()" requires-channel="http"/>
 		<custom-filter ref="customBasicFilter" position="BASIC_AUTH_FILTER"></custom-filter>
 	</http>
 	

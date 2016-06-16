@@ -62,6 +62,14 @@ public class TravelRepositoryImpl implements CustomTravelRepository{
 		return mongoOp.find(q, Travel.class);
 	}
 
-	
+	@Override
+	public List<Travel> findMyBusTravel(String id) {
+		Query q = new Query();
+		q.addCriteria(Criteria.where("isOnBus").is(true)
+				.andOperator(Criteria.where("passengerId").is(id)));
+		
+		return mongoOp.find(q, Travel.class);
+	}
 
+	
 }
